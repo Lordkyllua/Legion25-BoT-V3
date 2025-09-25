@@ -41,7 +41,7 @@ module.exports = {
       new ButtonBuilder()
         .setLabel('🎮 Tiny Survivors')
         .setStyle(ButtonStyle.Link)
-        .setURL('https://store.steampowered.com/app/2171440/Tiny_Survivors/'),
+        .setURL('https://www.micro-hunter.com/?lang=en'),
       new ButtonBuilder()
         .setLabel('⭐ Rate Bot')
         .setStyle(ButtonStyle.Secondary)
