@@ -64,7 +64,7 @@ module.exports = {
                         inline: false
                     }
                 )
-                .setImage('https://imgur.com/gallery/bug-fight-7VnrEnQ#ZOz8rQN')
+                .setImage('https://i.imgur.com/sV3ZJyv.png')
                 .setFooter({
                     text: 'Survive and thrive in this Tiny Survivors adventure! • Developed by LordK',
                     iconURL: interaction.client.user.displayAvatarURL()
