@@ -9,6 +9,8 @@ module.exports = {
     async execute(interaction) {
         try {
             const userId = interaction.user.id;
+            
+            // Usar la función corregida
             const userProfile = rpgUtil.getUserProfile(userId);
             
             const progressPercent = Math.round((userProfile.exp / userProfile.expToNextLevel) * 100);
