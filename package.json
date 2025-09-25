@@ -1,0 +1,17 @@
+{
+  "name": "discord-survivor-bot",
+  "version": "1.0.0",
+  "description": "A beautiful Discord bot inspired by Tiny Survivors with RPG elements",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node index.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.14.1",
+    "axios": "^1.6.0"
+  },
+  "keywords": ["discord", "bot", "rpg", "survivor", "games"],
+  "author": "LordK",
+  "license": "MIT"
+}
