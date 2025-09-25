@@ -10,46 +10,22 @@ module.exports = {
     async execute(interaction) {
         try {
             const userId = interaction.user.id;
-            
-            // Usar la función corregida
-            const profile = rpgUtil.getUserProfile(userId);
-            const success = Math.random() > 0.25;
+            const success = Math.random() > 0.3; // 70% success rate
             
             if (success) {
-                let expGained = Math.floor(Math.random() * 40) + 20;
-                let goldGained = Math.floor(Math.random() * 25) + 15;
-                let pointsGained = Math.floor(Math.random() * 15) + 5;
+                const expGained = Math.floor(Math.random() * 30) + 20;
+                const goldGained = Math.floor(Math.random() * 15) + 10;
+                const pointsGained = Math.floor(Math.random() * 10) + 5;
                 
-                if (profile.class === 'warrior') {
-                    goldGained += 5;
-                } else if (profile.class === 'mage') {
-                    expGained += 10;
-                } else if (profile.class === 'archer') {
-                    pointsGained += 5;
-                }
-                
-                expGained += profile.level * 2;
-                goldGained += profile.level;
-                
-                // Usar las funciones corregidas
+                // Use the functions directly
                 const levelUpResult = rpgUtil.addExperience(userId, expGained);
                 pointsUtil.addPoints(userId, pointsGained);
                 rpgUtil.addGold(userId, goldGained);
                 
-                const questMessages = [
-                    "You defeated a group of monsters!",
-                    "You found a hidden treasure!",
-                    "You completed a mission for the villagers!",
-                    "You successfully explored ancient ruins!",
-                    "You overcame an epic challenge!"
-                ];
-                
-                const randomMessage = questMessages[Math.floor(Math.random() * questMessages.length)];
-                
                 const embed = new EmbedBuilder()
                     .setColor(0x00FF00)
                     .setTitle('✅ Quest Completed!')
-                    .setDescription(randomMessage)
+                    .setDescription('You successfully completed your quest!')
                     .addFields(
                         {
                             name: '⭐ Experience Gained',
@@ -71,47 +47,29 @@ module.exports = {
                 if (levelUpResult.leveledUp) {
                     embed.addFields({
                         name: '🎉 Level Up!',
-                        value: `Congratulations! You are now level **${levelUpResult.newLevel}**!`,
+                        value: `Congratulations! You reached level **${levelUpResult.newLevel}**!`,
                         inline: false
                     });
-                    
-                    if (levelUpResult.newSkills && levelUpResult.newSkills.length > 0) {
-                        embed.addFields({
-                            name: '⚡ New Skills',
-                            value: levelUpResult.newSkills.map(skill => `• ${skill}`).join('\n'),
-                            inline: false
-                        });
-                    }
                 }
                 
                 embed.setFooter({ 
-                    text: 'Keep it up, adventurer! • Developed by LordK', 
+                    text: 'Great job adventurer! • Developed by LordK', 
                     iconURL: interaction.client.user.displayAvatarURL() 
                 });
                 
                 await interaction.reply({ embeds: [embed] });
                 
             } else {
-                const failMessages = [
-                    "The monsters were too strong...",
-                    "You got lost on the way and had to return.",
-                    "The treasure turned out to be a trap.",
-                    "A storm forced you to cancel the mission.",
-                    "You found a greater challenge than expected."
-                ];
-                
-                const randomFailMessage = failMessages[Math.floor(Math.random() * failMessages.length)];
-                
                 const embed = new EmbedBuilder()
                     .setColor(0xFFA500)
                     .setTitle('💥 Quest Failed')
-                    .setDescription(randomFailMessage)
+                    .setDescription('Your quest did not go as planned...')
                     .addFields({
                         name: '💡 Tip',
-                        value: 'Do not give up. Try again!'
+                        value: 'Try again! Success will come with persistence.'
                     })
                     .setFooter({ 
-                        text: 'Luck is not always on our side • Developed by LordK', 
+                        text: 'Better luck next time! • Developed by LordK', 
                         iconURL: interaction.client.user.displayAvatarURL() 
                     });
                 
@@ -121,7 +79,7 @@ module.exports = {
         } catch (error) {
             console.error('Error in quest command:', error);
             await interaction.reply({
-                content: '❌ Error processing your quest. Try again later.',
+                content: '❌ Error processing your quest. Please try again.',
                 ephemeral: true
             });
         }
