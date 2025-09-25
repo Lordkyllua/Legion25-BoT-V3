@@ -2,51 +2,82 @@
   "items": [
     {
       "id": 1,
-      "name": "Survivor's Bow",
-      "price": 150,
-      "type": "weapon",
-      "category": "Weapons",
-      "description": "Basic bow for surviving waves"
+      "name": "Small Health Potion",
+      "price": 25,
+      "currency": "gold",
+      "type": "consumable",
+      "category": "Consumables",
+      "description": "Restores 30 HP",
+      "effect": "heal:30",
+      "class": "all"
     },
     {
       "id": 2,
-      "name": "Health Potion",
-      "price": 75,
+      "name": "Large Health Potion",
+      "price": 60,
+      "currency": "gold",
       "type": "consumable",
       "category": "Consumables",
-      "description": "Restores 25 HP in battle"
+      "description": "Restores 70 HP",
+      "effect": "heal:70",
+      "class": "all"
     },
     {
       "id": 3,
-      "name": "XP Boost",
-      "price": 200,
-      "type": "boost",
-      "category": "Boosts",
-      "description": "25% XP boost for 1 hour"
+      "name": "Mana Potion",
+      "price": 40,
+      "currency": "gold",
+      "type": "consumable",
+      "category": "Consumables",
+      "description": "Restores 50 MP",
+      "effect": "mana:50",
+      "class": "mage"
     },
     {
       "id": 4,
-      "name": "Warrior Role",
-      "price": 300,
-      "type": "role",
-      "category": "Roles",
-      "description": "Unlock warrior class perks"
+      "name": "Strength Elixir",
+      "price": 100,
+      "currency": "gold",
+      "type": "consumable",
+      "category": "Consumables",
+      "description": "Increases attack by 15% for 30 min",
+      "effect": "buff:attack:15:1800",
+      "class": "all"
     },
     {
       "id": 5,
-      "name": "Magic Staff",
-      "price": 400,
-      "type": "weapon",
-      "category": "Weapons",
-      "description": "Enhances magical abilities"
+      "name": "Apprentice Sword",
+      "price": 150,
+      "currency": "gold",
+      "type": "equipment",
+      "category": "Warrior Weapons",
+      "description": "Basic sword for novice warriors",
+      "effect": "attack:10",
+      "class": "warrior"
     },
     {
       "id": 6,
-      "name": "Survivor Badge",
-      "price": 500,
-      "type": "badge",
-      "category": "Cosmetics",
-      "description": "Show your survival skills"
+      "name": "Battle Axe",
+      "price": 300,
+      "currency": "gold",
+      "type": "equipment",
+      "category": "Warrior Weapons",
+      "description": "Powerful axe for warriors",
+      "effect": "attack:25",
+      "class": "warrior",
+      "requiredLevel": 5
+    },
+    {
+      "id": 7,
+      "name": "Legendary Sword",
+      "price": 800,
+      "currency": "gold",
+      "type": "equipment",
+      "category": "Warrior Weapons",
+      "description": "Legendary sword of great heroes",
+      "effect": "attack:45",
+      "class": "warrior",
+      "requiredLevel": 15
     }
   ]
 }
