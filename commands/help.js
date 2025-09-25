@@ -23,11 +23,7 @@ module.exports = {
                 { name: 'coinflip', description: 'Bet points on a coin flip game' }
             ],
             '👥 Social & Roles': [
-                { name: 'roles', description: 'Self-assign roles from available options' },
-                { name: 'clan', description: 'View your clan information' },
-                { name: 'createclan', description: 'Create a new clan' },
-                { name: 'joinclan', description: 'Join an existing clan' },
-                { name: 'claninfo', description: 'Get detailed clan information' }
+                { name: 'roles', description: 'Self-assign roles from available options' }
             ],
             '🛡️ Moderation': [
                 { name: 'roleadmin', description: 'Admin panel for managing assignable roles' },
@@ -38,7 +34,7 @@ module.exports = {
             '🎉 Fun & Entertainment': [
                 { name: 'meme', description: 'Get a random meme from Reddit' },
                 { name: 'quote', description: 'Receive an inspirational quote' },
-                { name: 'gif', description: 'Search for GIFs (requires GIPHY API key)' },
+                { name: 'gif', description: 'Search for GIFs' },
                 { name: 'fight', description: 'Challenge another player to a battle' }
             ]
         };
@@ -46,9 +42,8 @@ module.exports = {
         const helpEmbed = new EmbedBuilder()
             .setColor(0x6a0dad)
             .setTitle('🌟 Survivor Bot - Command Center')
-            .setDescription('Welcome to your survival adventure! Here are all the commands to enhance your experience:')
+            .setDescription('Welcome to your survival adventure! Inspired by **Tiny Survivors** by **Micro Hunter**')
             .setThumbnail(interaction.client.user.displayAvatarURL())
-            .setImage('https://i.imgur.com/5D4z8x2.png')
             .addFields(
                 Object.entries(commandCategories).map(([category, commands]) => ({
                     name: `${category}`,
@@ -63,20 +58,20 @@ module.exports = {
                     '2. **Build your character**: Use `/quest` to earn EXP and gold',
                     '3. **Gear up**: Visit `/shop` to buy powerful items',
                     '4. **Evolve**: Use `/evolution` at level 25, 50, and 75',
-                    '5. **Compete**: Check `/ranking` to see your progress'
+                    '5. **Learn more**: Use `/tinysurvivors` about the inspiration'
                 ].join('\n')
             })
             .setFooter({
-                text: 'Survivor Bot • Developed with 💜 by LordK • Inspired by Tiny Survivors',
+                text: 'Inspired by Tiny Survivors by Micro Hunter • Developed by LordK',
                 iconURL: interaction.client.user.displayAvatarURL()
             })
             .setTimestamp();
 
         const supportButton = new ActionRowBuilder().addComponents(
             new ButtonBuilder()
-                .setLabel('🎮 Tiny Survivors Info')
+                .setLabel('🎮 Play Tiny Survivors')
                 .setStyle(ButtonStyle.Link)
-                .setURL('https://store.steampowered.com/app/2171440/Tiny_Survivors/'),
+                .setURL('https://www.micro-hunter.com/?lang=en'),
             new ButtonBuilder()
                 .setLabel('🆘 Get Support')
                 .setStyle(ButtonStyle.Secondary)
