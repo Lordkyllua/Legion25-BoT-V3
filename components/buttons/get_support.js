@@ -2,51 +2,63 @@ const { EmbedBuilder } = require('discord.js');
 
 module.exports = {
     name: 'get_support',
-    async execute(interaction) {
-        await interaction.deferUpdate();
-        
-        const supportEmbed = new EmbedBuilder()
-            .setColor(0x0099ff)
-            .setTitle('🆘 Support & Help')
-            .setDescription('Need help with the bot? Here are some resources:')
-            .addFields(
-                {
-                    name: '📖 Common Issues',
-                    value: [
-                        '• **Commands not working?** Make sure the bot has proper permissions',
-                        '• **Can\'t choose class?** You can only choose once per character',
-                        '• **Shop items missing?** Some items require specific levels or classes',
-                        '• **Evolution not available?** Check if you meet the level requirements'
-                    ].join('\n')
-                },
-                {
-                    name: '🔧 Technical Support',
-                    value: [
-                        '• Ensure the bot is online and has required intents',
-                        '• Check that all commands are properly registered',
-                        '• Verify file permissions for data storage',
-                        '• Restart the bot if issues persist'
-                    ].join('\n')
-                },
-                {
-                    name: '🎮 Gameplay Tips',
-                    value: [
-                        '• Use `/quest` frequently to level up faster',
-                        '• Save gold for class-specific items in `/shop`',
-                        '• Choose your evolution path carefully - it\'s permanent!',
-                        '• Higher level quests give better rewards'
-                    ].join('\n')
-                }
-            )
-            .setFooter({
-                text: 'Developed by LordK • For additional help, contact server administrators',
-                iconURL: interaction.client.user.displayAvatarURL()
-            })
-            .setTimestamp();
+    async execute(interaction, client) {
+        try {
+            await interaction.deferUpdate();
+            
+            const supportEmbed = new EmbedBuilder()
+                .setColor(0x0099ff)
+                .setTitle('🆘 Support & Help Center')
+                .setDescription('Need assistance with the Survivor Bot? Here are resources to help you:')
+                .addFields(
+                    {
+                        name: '🎮 About the Inspiration',
+                        value: 'This bot is inspired by **Tiny Survivors** by **Micro Hunter** - an incremental idle survival game.'
+                    },
+                    {
+                        name: '📖 Common Issues & Solutions',
+                        value: [
+                            '• **Commands not working?** Check bot permissions',
+                            '• **Class selection?** You can only choose once',
+                            '• **Evolution system?** Available at levels 25, 50, 75',
+                            '• **Gameplay questions?** Use `/tinysurvivors` for inspiration info'
+                        ].join('\n')
+                    },
+                    {
+                        name: '🔧 Technical Support',
+                        value: [
+                            '• Ensure the bot has proper permissions',
+                            '• Check that commands are registered',
+                            '• Verify the bot is online and responsive',
+                            '• Contact server admins for setup issues'
+                        ].join('\n')
+                    },
+                    {
+                        name: '🌐 Useful Links',
+                        value: [
+                            '• [Tiny Survivors Game](https://www.micro-hunter.com/?lang=en)',
+                            '• [Micro Hunter Website](https://www.micro-hunter.com/)',
+                            '• [More Micro Hunter Games](https://www.micro-hunter.com/games.html)'
+                        ].join('\n')
+                    }
+                )
+                .setFooter({
+                    text: 'Inspired by Tiny Survivors by Micro Hunter • Bot developed by LordK',
+                    iconURL: client.user.displayAvatarURL()
+                })
+                .setTimestamp();
 
-        await interaction.editReply({ 
-            embeds: [supportEmbed],
-            components: [] 
-        });
+            await interaction.editReply({ 
+                embeds: [supportEmbed],
+                components: [] 
+            });
+            
+        } catch (error) {
+            console.error('Error in get_support button:', error);
+            await interaction.editReply({ 
+                content: '❌ Error loading support information. Please try the Tiny Survivors game while we fix this!',
+                components: [] 
+            });
+        }
     }
 };
