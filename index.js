@@ -1,8 +1,8 @@
-const { Client, GatewayIntentBits, Collection, REST, Routes, ActivityType } = require('discord.js');
+const { Client, GatewayIntentBits, Collection, REST, Routes } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 
-// Beautiful console logging
+// Beautiful console logging - DEFINIDO CORRECTAMENTE
 const logger = {
   info: (msg) => console.log(`🌈 ${msg}`),
   success: (msg) => console.log(`✅ ${msg}`),
@@ -28,6 +28,9 @@ const client = new Client({
   ]
 });
 
+// Asignar logger al client para acceso global
+client.logger = logger;
+
 // Beautiful startup banner
 console.log(`
 ╔══════════════════════════════════════╗
@@ -41,7 +44,7 @@ client.commands = new Collection();
 client.buttons = new Collection();
 client.selectMenus = new Collection();
 
-// Load commands with beautiful logging
+// Load commands
 const loadCommands = () => {
   const commandsPath = path.join(__dirname, 'commands');
   const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
@@ -80,7 +83,7 @@ const loadComponents = (type, collection) => {
   });
 };
 
-// Load events
+// Load events - CORREGIDO: pasar client en lugar de logger
 const loadEvents = () => {
   const eventsPath = path.join(__dirname, 'events');
   const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'));
@@ -89,9 +92,9 @@ const loadEvents = () => {
     try {
       const event = require(path.join(eventsPath, file));
       if (event.once) {
-        client.once(event.name, (...args) => event.execute(...args, client, logger));
+        client.once(event.name, (...args) => event.execute(...args, client));
       } else {
-        client.on(event.name, (...args) => event.execute(...args, client, logger));
+        client.on(event.name, (...args) => event.execute(...args, client));
       }
       logger.event(`Loaded event: ${event.name}`);
     } catch (error) {
@@ -105,9 +108,18 @@ const initializeData = () => {
   const dataFiles = [
     { name: 'points.json', default: {} },
     { name: 'store.json', default: { items: [] } },
-    { name: 'database.json', default: { users: {}, clans: {}, warnings: {} } },
-    { name: 'utils/rolesConfig.json', default: { assignableRoles: [], adminRoles: [] } }
+    { name: 'database.json', default: { users: {}, clans: {}, warnings: {} } }
   ];
+
+  // Crear directorio utils si no existe
+  if (!fs.existsSync('utils')) {
+    fs.mkdirSync('utils');
+  }
+  
+  // Crear rolesConfig.json en utils
+  if (!fs.existsSync('utils/rolesConfig.json')) {
+    fs.writeFileSync('utils/rolesConfig.json', JSON.stringify({ assignableRoles: [], adminRoles: [] }, null, 2));
+  }
 
   dataFiles.forEach(({ name, default: defaultData }) => {
     if (!fs.existsSync(name)) {
