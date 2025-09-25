@@ -3,7 +3,10 @@ const { ActivityType } = require('discord.js');
 module.exports = {
   name: 'ready',
   once: true,
-  execute(client, logger) {
+  execute(client) {
+    // Usar logger desde client
+    const logger = client.logger;
+    
     const botName = client.user.tag;
     const serverCount = client.guilds.cache.size;
     const userCount = client.users.cache.size;
@@ -19,8 +22,7 @@ module.exports = {
       { name: 'the item shop', type: ActivityType.Watching, emoji: '🛍️' },
       { name: `${serverCount} servers`, type: ActivityType.Watching, emoji: '🌐' },
       { name: '/help for commands', type: ActivityType.Listening, emoji: '📖' },
-      { name: 'RPG quests', type: ActivityType.Playing, emoji: '🏹' },
-      { name: 'wave survival', type: ActivityType.Streaming, emoji: '🌊' }
+      { name: 'RPG quests', type: ActivityType.Playing, emoji: '🏹' }
     ];
 
     let currentIndex = 0;
@@ -29,8 +31,7 @@ module.exports = {
       const status = statuses[currentIndex];
       client.user.setActivity({
         name: status.name,
-        type: status.type,
-        url: status.type === ActivityType.Streaming ? 'https://twitch.tv/directory/game/Tiny%20Survivors' : null
+        type: status.type
       });
       
       logger.info(`Status updated: ${status.emoji} ${status.type} ${status.name}`);
