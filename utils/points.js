@@ -22,7 +22,7 @@ module.exports = {
             fs.writeFileSync(pointsPath, JSON.stringify(points, null, 2));
             return points[userId];
         } catch (error) {
-            // Si hay error, crear archivo nuevo
+            // If error, create new file
             const points = { [userId]: amount };
             fs.writeFileSync(pointsPath, JSON.stringify(points, null, 2));
             return amount;
