@@ -4,90 +4,76 @@ const rpgUtil = require('../utils/rpg');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('rpg')
-        .setDescription('View your RPG character profile - Tiny Survivors style'),
+        .setDescription('View your RPG character profile'),
     
     async execute(interaction) {
         try {
             const userId = interaction.user.id;
-            
-            // Usar la función correctamente - ahora es una función exportada
             const userProfile = rpgUtil.getUserProfile(userId);
             
-            // Calcular porcentaje de progreso
             const progressPercent = Math.round((userProfile.exp / userProfile.expToNextLevel) * 100);
             const progressBar = '█'.repeat(Math.floor(progressPercent / 10)) + '░'.repeat(10 - Math.floor(progressPercent / 10));
             
             const embed = new EmbedBuilder()
                 .setColor(0x00FF00)
-                .setTitle(`⚔️ ${interaction.user.username}'s Survivor Profile`)
+                .setTitle(`⚔️ ${interaction.user.username}'s Profile`)
                 .setThumbnail(interaction.user.displayAvatarURL())
-                .setDescription('*Your journey in the world of Tiny Survivors begins here!*')
+                .setDescription(userProfile.class ? 
+                    `**${userProfile.className}** level ${userProfile.level}` : 
+                    '**Apprentice** - Use `/class` to choose your class!')
                 .addFields(
                     {
-                        name: '🏹 Level',
-                        value: `**${userProfile.level}**`,
-                        inline: true
-                    },
-                    {
-                        name: '⭐ Experience',
-                        value: `${userProfile.exp}/${userProfile.expToNextLevel}`,
-                        inline: true
-                    },
-                    {
-                        name: '📊 Progress',
-                        value: `${progressBar} ${progressPercent}%`,
-                        inline: true
-                    },
-                    {
-                        name: '❤️ Health',
-                        value: `**${userProfile.health}** HP`,
-                        inline: true
-                    },
-                    {
-                        name: '💰 Gold',
-                        value: `**${userProfile.gold}** coins`,
-                        inline: true
-                    },
-                    {
-                        name: '🛡️ Class',
-                        value: `**${userProfile.class}**`,
-                        inline: true
-                    },
-                    {
-                        name: '⚔️ Equipment',
-                        value: `Weapon: ${userProfile.equipment.weapon}\nArmor: ${userProfile.equipment.armor}`,
+                        name: '📊 Level and Experience',
+                        value: `**Level:** ${userProfile.level}\n**EXP:** ${userProfile.exp}/${userProfile.expToNextLevel}\n**Progress:** ${progressBar} ${progressPercent}%`,
                         inline: false
                     },
                     {
-                        name: '🎯 Skills',
-                        value: userProfile.skills.map(skill => `• ${skill}`).join('\n') || 'No skills learned',
-                        inline: false
+                        name: '❤️ Main Attributes',
+                        value: `**Health:** ${userProfile.health}/${userProfile.maxHealth}\n**Mana:** ${userProfile.mana}/${userProfile.maxMana}\n**Gold:** ${userProfile.gold} 🥇`,
+                        inline: true
+                    },
+                    {
+                        name: '🎯 Statistics',
+                        value: `⚔️ Attack: ${userProfile.stats.attack}\n🛡️ Defense: ${userProfile.stats.defense}\n🔮 Magic: ${userProfile.stats.magic}\n🎯 Agility: ${userProfile.stats.agility}`,
+                        inline: true
                     }
-                )
-                .setImage('https://i.imgur.com/sV3ZJyv.png')
-                .setFooter({
-                    text: 'Survive and thrive in this Tiny Survivors adventure! • Developed by LordK',
-                    iconURL: interaction.client.user.displayAvatarURL()
-                })
-                .setTimestamp();
+                );
+            
+            if (userProfile.class) {
+                embed.addFields({
+                    name: '⚡ Skills',
+                    value: userProfile.skills.map(skill => `• ${skill}`).join('\n') || 'No skills',
+                    inline: false
+                });
+            }
+            
+            embed.addFields({
+                name: '🎽 Equipment',
+                value: `**Weapon:** ${userProfile.equipment.weapon}\n**Armor:** ${userProfile.equipment.armor}\n**Accessory:** ${userProfile.equipment.accessory}`,
+                inline: false
+            });
+            
+            if (userProfile.evolution) {
+                embed.addFields({
+                    name: '✨ Evolution',
+                    value: `**${userProfile.evolution}** (Level ${userProfile.evolutionLevel}+)`,
+                    inline: true
+                });
+            }
+            
+            embed.setFooter({ 
+                text: `Developed by LordK • ${userProfile.inventory ? `Items: ${userProfile.inventory.length}` : 'Empty inventory'}`, 
+                iconURL: interaction.client.user.displayAvatarURL() 
+            })
+            .setTimestamp();
 
             await interaction.reply({ embeds: [embed] });
             
         } catch (error) {
             console.error('Error in RPG command:', error);
-            
-            const errorEmbed = new EmbedBuilder()
-                .setColor(0xFF0000)
-                .setTitle('❌ Error Loading Profile')
-                .setDescription('There was an error loading your RPG profile. Please try again later.')
-                .setFooter({
-                    text: 'Bot developed by LordK',
-                    iconURL: interaction.client.user.displayAvatarURL()
-                });
-
-            await interaction.reply({ 
-                embeds: [errorEmbed],
-                ephemeral: true 
+            await interaction.reply({
+                content: '❌ Error loading your RPG profile. Try again later.',
+                ephemeral: true
             });
         }
     }
