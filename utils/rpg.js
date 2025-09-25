@@ -213,5 +213,413 @@ const baseSkills = {
   ]
 };
 
-// Rest of the functions remain the same but with English messages...
-// [Previous code structure remains the same, but messages in English]
+// Función para obtener el perfil del usuario - CORREGIDA
+const getUserProfile = (userId) => {
+    try {
+        const databasePath = path.join(__dirname, '../database.json');
+        const databaseData = fs.readFileSync(databasePath, 'utf8');
+        const database = JSON.parse(databaseData);
+        
+        if (database.users && database.users[userId] && database.users[userId].rpg) {
+            return database.users[userId].rpg;
+        }
+        
+        // Default profile
+        const defaultProfile = {
+            level: 1,
+            exp: 0,
+            expToNextLevel: 100,
+            health: 100,
+            maxHealth: 100,
+            mana: 50,
+            maxMana: 50,
+            gold: 50,
+            class: null,
+            className: "Apprentice",
+            evolution: null,
+            evolutionLevel: 0,
+            skills: ['Basic Attack'],
+            equipment: {
+                weapon: 'None',
+                armor: 'Basic Clothes',
+                accessory: 'None'
+            },
+            stats: {
+                attack: 10,
+                defense: 5,
+                magic: 5,
+                agility: 10
+            },
+            inventory: [],
+            achievements: []
+        };
+        
+        if (!database.users) database.users = {};
+        if (!database.users[userId]) database.users[userId] = {};
+        database.users[userId].rpg = defaultProfile;
+        
+        fs.writeFileSync(databasePath, JSON.stringify(database, null, 2));
+        return defaultProfile;
+        
+    } catch (error) {
+        console.error('Error in getUserProfile:', error);
+        // Return default profile in case of error
+        return {
+            level: 1,
+            exp: 0,
+            expToNextLevel: 100,
+            health: 100,
+            maxHealth: 100,
+            mana: 50,
+            maxMana: 50,
+            gold: 50,
+            class: null,
+            className: "Apprentice",
+            evolution: null,
+            evolutionLevel: 0,
+            skills: ['Basic Attack'],
+            equipment: {
+                weapon: 'None',
+                armor: 'Basic Clothes',
+                accessory: 'None'
+            },
+            stats: {
+                attack: 10,
+                defense: 5,
+                magic: 5,
+                agility: 10
+            },
+            inventory: [],
+            achievements: []
+        };
+    }
+};
+
+// Función para elegir clase - CORREGIDA
+const chooseClass = (userId, className) => {
+    try {
+        if (!classes[className]) {
+            return { success: false, message: '❌ Invalid class. Available classes: warrior, mage, archer.' };
+        }
+        
+        const profile = getUserProfile(userId);
+        
+        if (profile.class) {
+            return { success: false, message: '❌ You already have a class. You cannot change it.' };
+        }
+        
+        const classInfo = classes[className];
+        
+        // Update profile with chosen class
+        profile.class = className;
+        profile.className = classInfo.name;
+        profile.maxHealth = classInfo.baseStats.health;
+        profile.health = classInfo.baseStats.health;
+        profile.maxMana = 50 + (classInfo.baseStats.magic * 2);
+        profile.mana = 50 + (classInfo.baseStats.magic * 2);
+        
+        // Update base statistics
+        Object.keys(classInfo.baseStats).forEach(stat => {
+            profile.stats[stat] = classInfo.baseStats[stat];
+        });
+        
+        // Add class skills
+        profile.skills = ['Basic Attack'].concat(
+            baseSkills[className].filter(skill => skill.level === 1).map(skill => skill.name)
+        );
+        
+        // Save changes
+        saveProfile(userId, profile);
+        
+        return { 
+            success: true, 
+            message: `🎉 You have become a ${classInfo.name}!`,
+            class: classInfo
+        };
+        
+    } catch (error) {
+        console.error('Error choosing class:', error);
+        return { success: false, message: '❌ Error choosing class.' };
+    }
+};
+
+// Función para evolucionar de clase - CORREGIDA
+const evolveClass = (userId, evolutionIndex) => {
+    try {
+        const profile = getUserProfile(userId);
+        
+        if (!profile.class) {
+            return { success: false, message: '❌ First choose a class with `/class`.' };
+        }
+        
+        const classInfo = classes[profile.class];
+        const currentLevel = profile.level;
+        
+        // Check available evolutions
+        const availableEvolutions = Object.keys(classInfo.evolutions)
+            .filter(evoLevel => currentLevel >= parseInt(evoLevel) && parseInt(evoLevel) > profile.evolutionLevel)
+            .sort((a, b) => parseInt(a) - parseInt(b));
+        
+        if (availableEvolutions.length === 0) {
+            return { success: false, message: '❌ No evolutions available. Keep leveling up.' };
+        }
+        
+        const nextEvolutionLevel = availableEvolutions[0];
+        const evolutionOptions = classInfo.evolutions[nextEvolutionLevel];
+        
+        if (evolutionIndex < 0 || evolutionIndex >= evolutionOptions.length) {
+            return { success: false, message: '❌ Invalid evolution option.' };
+        }
+        
+        const chosenEvolution = evolutionOptions[evolutionIndex];
+        
+        // Apply evolution
+        profile.evolution = chosenEvolution.name;
+        profile.className = chosenEvolution.name;
+        profile.evolutionLevel = parseInt(nextEvolutionLevel);
+        
+        // Apply stat bonuses
+        Object.keys(chosenEvolution.stats).forEach(stat => {
+            if (stat === 'health') {
+                profile.maxHealth += chosenEvolution.stats[stat];
+                profile.health = profile.maxHealth;
+            } else {
+                profile.stats[stat] += chosenEvolution.stats[stat];
+            }
+        });
+        
+        // Add new skills
+        chosenEvolution.skills.forEach(skill => {
+            if (!profile.skills.includes(skill)) {
+                profile.skills.push(skill);
+            }
+        });
+        
+        // Add achievement
+        if (!profile.achievements) profile.achievements = [];
+        profile.achievements.push(`Evolved to ${chosenEvolution.name} (Level ${nextEvolutionLevel})`);
+        
+        saveProfile(userId, profile);
+        
+        return { 
+            success: true, 
+            message: `🎉 You have evolved to ${chosenEvolution.name}!`,
+            evolution: chosenEvolution,
+            level: nextEvolutionLevel
+        };
+        
+    } catch (error) {
+        console.error('Error evolving class:', error);
+        return { success: false, message: '❌ Error evolving.' };
+    }
+};
+
+// Función para ver evoluciones disponibles - CORREGIDA
+const getAvailableEvolutions = (userId) => {
+    try {
+        const profile = getUserProfile(userId);
+        
+        if (!profile.class) {
+            return { success: false, message: 'First choose a class.' };
+        }
+        
+        const classInfo = classes[profile.class];
+        const currentLevel = profile.level;
+        
+        const availableEvolutions = {};
+        
+        Object.keys(classInfo.evolutions).forEach(evoLevel => {
+            if (currentLevel >= parseInt(evoLevel) && parseInt(evoLevel) > profile.evolutionLevel) {
+                availableEvolutions[evoLevel] = classInfo.evolutions[evoLevel];
+            }
+        });
+        
+        return { 
+            success: true, 
+            availableEvolutions,
+            currentEvolutionLevel: profile.evolutionLevel,
+            hasEvolutions: Object.keys(availableEvolutions).length > 0
+        };
+        
+    } catch (error) {
+        console.error('Error getting evolutions:', error);
+        return { success: false, availableEvolutions: {} };
+    }
+};
+
+// Función para agregar experiencia - CORREGIDA
+const addExperience = (userId, exp) => {
+    try {
+        const profile = getUserProfile(userId);
+        profile.exp += exp;
+        
+        let leveledUp = false;
+        let levelsGained = 0;
+        let newSkills = [];
+        
+        // Check if level up (max level 100)
+        while (profile.exp >= profile.expToNextLevel && profile.level < 100) {
+            profile.exp -= profile.expToNextLevel;
+            profile.level++;
+            
+            // Calculate EXP for next level (increases progressively)
+            profile.expToNextLevel = Math.floor(100 * Math.pow(1.1, profile.level - 1));
+            
+            // Improve statistics according to class
+            if (profile.class) {
+                const classInfo = classes[profile.class];
+                const statMultiplier = 1 + (profile.level * 0.02);
+                
+                profile.maxHealth = Math.floor(classInfo.baseStats.health * statMultiplier);
+                if (profile.evolution) {
+                    const evolutionBonus = classInfo.evolutions[profile.evolutionLevel]?.find(e => e.name === profile.evolution)?.stats.health || 0;
+                    profile.maxHealth += evolutionBonus;
+                }
+                profile.health = profile.maxHealth;
+                
+                profile.maxMana = Math.floor((50 + (classInfo.baseStats.magic * 2)) * statMultiplier);
+                profile.mana = profile.maxMana;
+                
+                // Improve base statistics
+                Object.keys(classInfo.baseStats).forEach(stat => {
+                    if (stat !== 'health') {
+                        profile.stats[stat] = Math.floor(classInfo.baseStats[stat] * statMultiplier);
+                    }
+                });
+                
+                // Learn new skills according to level
+                const availableSkills = baseSkills[profile.class].filter(skill => 
+                    skill.level === profile.level && 
+                    !profile.skills.includes(skill.name)
+                );
+                
+                if (availableSkills.length > 0) {
+                    availableSkills.forEach(skill => {
+                        profile.skills.push(skill.name);
+                        newSkills.push(skill.name);
+                    });
+                }
+            }
+            
+            leveledUp = true;
+            levelsGained++;
+            
+            // If reached max level
+            if (profile.level >= 100) {
+                profile.exp = 0;
+                profile.expToNextLevel = 0;
+                if (!profile.achievements) profile.achievements = [];
+                profile.achievements.push("Maximum Level 100 Reached!");
+                break;
+            }
+        }
+        
+        saveProfile(userId, profile);
+        
+        return { 
+            leveledUp, 
+            levelsGained, 
+            newLevel: profile.level,
+            currentExp: profile.exp,
+            nextLevelExp: profile.expToNextLevel,
+            newSkills,
+            maxLevelReached: profile.level >= 100
+        };
+        
+    } catch (error) {
+        console.error('Error in addExperience:', error);
+        return { leveledUp: false, levelsGained: 0, newLevel: 1, newSkills: [] };
+    }
+};
+
+// Función para agregar oro - CORREGIDA
+const addGold = (userId, amount) => {
+    try {
+        const profile = getUserProfile(userId);
+        profile.gold += amount;
+        
+        saveProfile(userId, profile);
+        return profile.gold;
+        
+    } catch (error) {
+        console.error('Error in addGold:', error);
+        return 0;
+    }
+};
+
+// Función para comprar items con oro - CORREGIDA
+const buyItem = (userId, itemId) => {
+    try {
+        const storePath = path.join(__dirname, '../store.json');
+        const storeData = fs.readFileSync(storePath, 'utf8');
+        const store = JSON.parse(storeData);
+        
+        const item = store.items.find(i => i.id === itemId);
+        if (!item) {
+            return { success: false, message: '❌ Item not found.' };
+        }
+        
+        const profile = getUserProfile(userId);
+        
+        // Check if user has enough gold
+        if (profile.gold < item.price) {
+            return { success: false, message: `❌ You don't have enough gold. You need ${item.price} but have ${profile.gold}.` };
+        }
+        
+        // Check level and class requirements
+        if (item.requiredLevel && profile.level < item.requiredLevel) {
+            return { success: false, message: `❌ You need level ${item.requiredLevel} to buy this item.` };
+        }
+        
+        if (item.class !== 'all' && profile.class !== item.class) {
+            return { success: false, message: `❌ This item is only for ${item.class} class.` };
+        }
+        
+        // Subtract gold
+        profile.gold -= item.price;
+        
+        // Add item to inventory
+        if (!profile.inventory) profile.inventory = [];
+        profile.inventory.push(item);
+        
+        saveProfile(userId, profile);
+        
+        return { success: true, message: `✅ You bought ${item.name} for ${item.price} gold!`, item };
+        
+    } catch (error) {
+        console.error('Error buying item:', error);
+        return { success: false, message: '❌ Error buying the item.' };
+    }
+};
+
+// Función auxiliar para guardar perfil - CORREGIDA
+const saveProfile = (userId, profile) => {
+    try {
+        const databasePath = path.join(__dirname, '../database.json');
+        const databaseData = fs.readFileSync(databasePath, 'utf8');
+        const database = JSON.parse(databaseData);
+        
+        if (!database.users) database.users = {};
+        if (!database.users[userId]) database.users[userId] = {};
+        database.users[userId].rpg = profile;
+        
+        fs.writeFileSync(databasePath, JSON.stringify(database, null, 2));
+        return true;
+    } catch (error) {
+        console.error('Error saving profile:', error);
+        return false;
+    }
+};
+
+// EXPORTACIÓN CORREGIDA - usando funciones const
+module.exports = {
+    getUserProfile,
+    chooseClass,
+    evolveClass,
+    getAvailableEvolutions,
+    addExperience,
+    addGold,
+    buyItem,
+    classes,
+    baseSkills
+};
