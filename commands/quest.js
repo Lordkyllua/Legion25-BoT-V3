@@ -10,6 +10,8 @@ module.exports = {
     async execute(interaction) {
         try {
             const userId = interaction.user.id;
+            
+            // Usar la función corregida
             const profile = rpgUtil.getUserProfile(userId);
             const success = Math.random() > 0.25;
             
@@ -29,6 +31,7 @@ module.exports = {
                 expGained += profile.level * 2;
                 goldGained += profile.level;
                 
+                // Usar las funciones corregidas
                 const levelUpResult = rpgUtil.addExperience(userId, expGained);
                 pointsUtil.addPoints(userId, pointsGained);
                 rpgUtil.addGold(userId, goldGained);
@@ -72,7 +75,7 @@ module.exports = {
                         inline: false
                     });
                     
-                    if (levelUpResult.newSkills.length > 0) {
+                    if (levelUpResult.newSkills && levelUpResult.newSkills.length > 0) {
                         embed.addFields({
                             name: '⚡ New Skills',
                             value: levelUpResult.newSkills.map(skill => `• ${skill}`).join('\n'),
