@@ -1,133 +1,94 @@
-const fs = require('fs');
-const path = require('path');
+const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const rpgUtil = require('../utils/rpg');
 
-// Función para obtener el perfil del usuario
-function getUserProfile(userId) {
-    try {
-        const databasePath = path.join(__dirname, '../database.json');
-        const databaseData = fs.readFileSync(databasePath, 'utf8');
-        const database = JSON.parse(databaseData);
-        
-        // Verificar si el usuario existe y tiene perfil RPG
-        if (database.users && database.users[userId] && database.users[userId].rpg) {
-            return database.users[userId].rpg;
-        }
-        
-        // Crear perfil por defecto si no existe
-        const defaultProfile = {
-            level: 1,
-            exp: 0,
-            expToNextLevel: 100,
-            health: 100,
-            gold: 50,
-            class: 'Adventurer',
-            skills: ['Basic Attack'],
-            equipment: {
-                weapon: 'Wooden Sword',
-                armor: 'Cloth Tunic'
-            }
-        };
-        
-        // Guardar el perfil por defecto
-        if (!database.users) database.users = {};
-        if (!database.users[userId]) database.users[userId] = {};
-        database.users[userId].rpg = defaultProfile;
-        
-        fs.writeFileSync(databasePath, JSON.stringify(database, null, 2));
-        return defaultProfile;
-        
-    } catch (error) {
-        console.error('Error in getUserProfile:', error);
-        // Retornar perfil por defecto en caso de error
-        return {
-            level: 1,
-            exp: 0,
-            expToNextLevel: 100,
-            health: 100,
-            gold: 50,
-            class: 'Adventurer',
-            skills: ['Basic Attack'],
-            equipment: {
-                weapon: 'Wooden Sword',
-                armor: 'Cloth Tunic'
-            }
-        };
-    }
-}
-
-// Función para agregar experiencia
-function addExperience(userId, exp) {
-    try {
-        const profile = getUserProfile(userId);
-        profile.exp += exp;
-        
-        let leveledUp = false;
-        let levelsGained = 0;
-        
-        // Verificar si sube de nivel
-        while (profile.exp >= profile.expToNextLevel) {
-            profile.exp -= profile.expToNextLevel;
-            profile.level++;
-            profile.expToNextLevel = Math.floor(profile.expToNextLevel * 1.5);
-            profile.health += 20;
-            profile.gold += profile.level * 10;
-            leveledUp = true;
-            levelsGained++;
-        }
-        
-        // Guardar los cambios
-        const databasePath = path.join(__dirname, '../database.json');
-        const databaseData = fs.readFileSync(databasePath, 'utf8');
-        const database = JSON.parse(databaseData);
-        
-        if (!database.users) database.users = {};
-        if (!database.users[userId]) database.users[userId] = {};
-        database.users[userId].rpg = profile;
-        
-        fs.writeFileSync(databasePath, JSON.stringify(database, null, 2));
-        
-        return { 
-            leveledUp, 
-            levelsGained, 
-            newLevel: profile.level,
-            currentExp: profile.exp,
-            nextLevelExp: profile.expToNextLevel
-        };
-        
-    } catch (error) {
-        console.error('Error in addExperience:', error);
-        return { leveledUp: false, levelsGained: 0, newLevel: 1 };
-    }
-}
-
-// Función para agregar oro
-function addGold(userId, amount) {
-    try {
-        const profile = getUserProfile(userId);
-        profile.gold += amount;
-        
-        // Guardar los cambios
-        const databasePath = path.join(__dirname, '../database.json');
-        const databaseData = fs.readFileSync(databasePath, 'utf8');
-        const database = JSON.parse(databaseData);
-        
-        if (!database.users) database.users = {};
-        if (!database.users[userId]) database.users[userId] = {};
-        database.users[userId].rpg = profile;
-        
-        fs.writeFileSync(databasePath, JSON.stringify(database, null, 2));
-        
-        return profile.gold;
-        
-    } catch (error) {
-        console.error('Error in addGold:', error);
-        return 0;
-    }
-}
-
-// Exportar las funciones correctamente
 module.exports = {
-    getUserProfile,
-    addExperience,
-    addGold
+    data: new SlashCommandBuilder()
+        .setName('rpg')
+        .setDescription('View your RPG character profile - Tiny Survivors style'),
+    
+    async execute(interaction) {
+        try {
+            const userId = interaction.user.id;
+            
+            // Usar la función correctamente - ahora es una función exportada
+            const userProfile = rpgUtil.getUserProfile(userId);
+            
+            // Calcular porcentaje de progreso
+            const progressPercent = Math.round((userProfile.exp / userProfile.expToNextLevel) * 100);
+            const progressBar = '█'.repeat(Math.floor(progressPercent / 10)) + '░'.repeat(10 - Math.floor(progressPercent / 10));
+            
+            const embed = new EmbedBuilder()
+                .setColor(0x00FF00)
+                .setTitle(`⚔️ ${interaction.user.username}'s Survivor Profile`)
+                .setThumbnail(interaction.user.displayAvatarURL())
+                .setDescription('*Your journey in the world of Tiny Survivors begins here!*')
+                .addFields(
+                    {
+                        name: '🏹 Level',
+                        value: `**${userProfile.level}**`,
+                        inline: true
+                    },
+                    {
+                        name: '⭐ Experience',
+                        value: `${userProfile.exp}/${userProfile.expToNextLevel}`,
+                        inline: true
+                    },
+                    {
+                        name: '📊 Progress',
+                        value: `${progressBar} ${progressPercent}%`,
+                        inline: true
+                    },
+                    {
+                        name: '❤️ Health',
+                        value: `**${userProfile.health}** HP`,
+                        inline: true
+                    },
+                    {
+                        name: '💰 Gold',
+                        value: `**${userProfile.gold}** coins`,
+                        inline: true
+                    },
+                    {
+                        name: '🛡️ Class',
+                        value: `**${userProfile.class}**`,
+                        inline: true
+                    },
+                    {
+                        name: '⚔️ Equipment',
+                        value: `Weapon: ${userProfile.equipment.weapon}\nArmor: ${userProfile.equipment.armor}`,
+                        inline: false
+                    },
+                    {
+                        name: '🎯 Skills',
+                        value: userProfile.skills.map(skill => `• ${skill}`).join('\n') || 'No skills learned',
+                        inline: false
+                    }
+                )
+                .setImage('https://i.imgur.com/7V8Q3z2.png')
+                .setFooter({
+                    text: 'Survive and thrive in this Tiny Survivors adventure! • Developed by LordK',
+                    iconURL: interaction.client.user.displayAvatarURL()
+                })
+                .setTimestamp();
+
+            await interaction.reply({ embeds: [embed] });
+            
+        } catch (error) {
+            console.error('Error in RPG command:', error);
+            
+            const errorEmbed = new EmbedBuilder()
+                .setColor(0xFF0000)
+                .setTitle('❌ Error Loading Profile')
+                .setDescription('There was an error loading your RPG profile. Please try again later.')
+                .setFooter({
+                    text: 'Bot developed by LordK',
+                    iconURL: interaction.client.user.displayAvatarURL()
+                });
+
+            await interaction.reply({ 
+                embeds: [errorEmbed],
+                ephemeral: true 
+            });
+        }
+    }
 };
