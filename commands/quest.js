@@ -5,29 +5,40 @@ const pointsUtil = require('../utils/points');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('quest')
-        .setDescription('Go on a quest to earn experience, points, and gold'),
+        .setDescription('Embark on a quest to earn experience, gold and points'),
     
     async execute(interaction) {
         try {
             const userId = interaction.user.id;
-            const success = Math.random() > 0.3;
+            const profile = rpgUtil.getUserProfile(userId);
+            const success = Math.random() > 0.25;
             
             if (success) {
-                const expGained = Math.floor(Math.random() * 50) + 25;
-                const pointsGained = Math.floor(Math.random() * 20) + 10;
-                const goldGained = Math.floor(Math.random() * 15) + 5;
+                let expGained = Math.floor(Math.random() * 40) + 20;
+                let goldGained = Math.floor(Math.random() * 25) + 15;
+                let pointsGained = Math.floor(Math.random() * 15) + 5;
                 
-                // Usar las funciones corregidas
+                if (profile.class === 'warrior') {
+                    goldGained += 5;
+                } else if (profile.class === 'mage') {
+                    expGained += 10;
+                } else if (profile.class === 'archer') {
+                    pointsGained += 5;
+                }
+                
+                expGained += profile.level * 2;
+                goldGained += profile.level;
+                
                 const levelUpResult = rpgUtil.addExperience(userId, expGained);
                 pointsUtil.addPoints(userId, pointsGained);
                 rpgUtil.addGold(userId, goldGained);
                 
                 const questMessages = [
-                    "You bravely defeated a group of monsters!",
-                    "You discovered a hidden treasure chest!",
-                    "You completed a challenging dungeon!",
-                    "You helped villagers defeat a boss!",
-                    "You explored ancient ruins successfully!"
+                    "You defeated a group of monsters!",
+                    "You found a hidden treasure!",
+                    "You completed a mission for the villagers!",
+                    "You successfully explored ancient ruins!",
+                    "You overcame an epic challenge!"
                 ];
                 
                 const randomMessage = questMessages[Math.floor(Math.random() * questMessages.length)];
@@ -43,7 +54,7 @@ module.exports = {
                             inline: true
                         },
                         {
-                            name: '💰 Gold Found',
+                            name: '💰 Gold Obtained',
                             value: `**+${goldGained} gold**`,
                             inline: true
                         },
@@ -57,25 +68,33 @@ module.exports = {
                 if (levelUpResult.leveledUp) {
                     embed.addFields({
                         name: '🎉 Level Up!',
-                        value: `Congratulations! You reached level **${levelUpResult.newLevel}**!`,
+                        value: `Congratulations! You are now level **${levelUpResult.newLevel}**!`,
                         inline: false
                     });
+                    
+                    if (levelUpResult.newSkills.length > 0) {
+                        embed.addFields({
+                            name: '⚡ New Skills',
+                            value: levelUpResult.newSkills.map(skill => `• ${skill}`).join('\n'),
+                            inline: false
+                        });
+                    }
                 }
                 
-                embed.setFooter({
-                    text: 'Great job survivor! • Developed by LordK',
-                    iconURL: interaction.client.user.displayAvatarURL()
+                embed.setFooter({ 
+                    text: 'Keep it up, adventurer! • Developed by LordK', 
+                    iconURL: interaction.client.user.displayAvatarURL() 
                 });
                 
                 await interaction.reply({ embeds: [embed] });
                 
             } else {
                 const failMessages = [
-                    "The monsters were too strong... better luck next time!",
-                    "You got lost in the dungeon and had to retreat.",
-                    "The treasure chest was trapped!",
-                    "A powerful boss defeated your party.",
-                    "You encountered unexpected challenges and had to return."
+                    "The monsters were too strong...",
+                    "You got lost on the way and had to return.",
+                    "The treasure turned out to be a trap.",
+                    "A storm forced you to cancel the mission.",
+                    "You found a greater challenge than expected."
                 ];
                 
                 const randomFailMessage = failMessages[Math.floor(Math.random() * failMessages.length)];
@@ -84,9 +103,13 @@ module.exports = {
                     .setColor(0xFFA500)
                     .setTitle('💥 Quest Failed')
                     .setDescription(randomFailMessage)
-                    .setFooter({
-                        text: 'Don\'t give up! Try again soon. • Developed by LordK',
-                        iconURL: interaction.client.user.displayAvatarURL()
+                    .addFields({
+                        name: '💡 Tip',
+                        value: 'Do not give up. Try again!'
+                    })
+                    .setFooter({ 
+                        text: 'Luck is not always on our side • Developed by LordK', 
+                        iconURL: interaction.client.user.displayAvatarURL() 
                     });
                 
                 await interaction.reply({ embeds: [embed] });
@@ -95,7 +118,7 @@ module.exports = {
         } catch (error) {
             console.error('Error in quest command:', error);
             await interaction.reply({
-                content: '❌ There was an error processing your quest. Please try again later.',
+                content: '❌ Error processing your quest. Try again later.',
                 ephemeral: true
             });
         }
