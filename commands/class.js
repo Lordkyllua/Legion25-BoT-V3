@@ -11,60 +11,88 @@ module.exports = {
             const userId = interaction.user.id;
             const profile = rpgUtil.getUserProfile(userId);
             
+            // Verificar si ya tiene clase
             if (profile.class) {
+                const classInfo = rpgUtil.classes[profile.class];
                 const embed = new EmbedBuilder()
                     .setColor(0xFF6B00)
-                    .setTitle('🎯 You already have a class')
-                    .setDescription(`You are already a **${profile.className}**. You cannot change your class.`)
+                    .setTitle('🎯 You already have a class!')
+                    .setDescription(`You are already a **${profile.className}** (${profile.class}).`)
                     .addFields(
                         {
-                            name: 'Your Statistics',
+                            name: '📊 Your Statistics',
                             value: `❤️ Health: ${profile.health}/${profile.maxHealth}\n⚔️ Attack: ${profile.stats.attack}\n🛡️ Defense: ${profile.stats.defense}\n🔮 Magic: ${profile.stats.magic}\n🎯 Agility: ${profile.stats.agility}`
+                        },
+                        {
+                            name: '⚡ Your Skills',
+                            value: profile.skills.map(skill => `• ${skill}`).join('\n') || 'No skills yet'
                         }
                     )
-                    .setFooter({ text: 'Developed by LordK • RPG System' });
+                    .setFooter({ 
+                        text: 'You cannot change your class once chosen • Developed by LordK',
+                        iconURL: interaction.user.displayAvatarURL()
+                    });
 
                 return await interaction.reply({ embeds: [embed] });
             }
             
+            // Mostrar opciones de clase con botones que funcionen
             const classEmbed = new EmbedBuilder()
                 .setColor(0x0099ff)
-                .setTitle('🎮 Choose your Class')
-                .setDescription('Your class will define your playstyle and abilities. Choose wisely!')
+                .setTitle('🎮 Choose Your Destiny')
+                .setDescription('**Your class defines your playstyle and abilities. Choose wisely!**\n\nThis decision is permanent and will shape your entire adventure.')
                 .setThumbnail(interaction.user.displayAvatarURL())
                 .addFields(
                     {
-                        name: '⚔️ Warrior',
-                        value: '**Description:** Melee fighter with high resistance\n**Stats:** ❤️ High health, ⚔️ High attack, 🛡️ Good defense\n**Skills:** Powerful strikes and defensive abilities',
+                        name: '⚔️ WARRIOR',
+                        value: '**The Melee Specialist**\n• High health and defense\n• Powerful physical attacks\n• Excellent for beginners\n• Great survivability',
+                        inline: true
+                    },
+                    {
+                        name: '🔮 MAGE',
+                        value: '**The Spellcasting Master**\n• Devastating magical damage\n• Area effect spells\n• Strategic gameplay\n• High damage potential',
+                        inline: true
+                    },
+                    {
+                        name: '🏹 ARCHER',
+                        value: '**The Ranged Expert**\n• High agility and precision\n• Ranged attacks\n• Great mobility\n• Critical hit specialist',
+                        inline: true
+                    },
+                    {
+                        name: '📈 Base Statistics Comparison',
+                        value: '```\nWarrior:  ❤️150  ⚔️20  🛡️15  🔮5   🎯8\nMage:     ❤️100  ⚔️8   🛡️8   🔮25  🎯10\nArcher:   ❤️120  ⚔️18  🛡️10  🔮8   🎯20```',
                         inline: false
                     },
                     {
-                        name: '🔮 Mage',
-                        value: '**Description:** Spellcaster with devastating magical damage\n**Stats:** 🔮 High magic, 🎯 Good agility\n**Skills:** Elemental spells and battle control',
-                        inline: false
-                    },
-                    {
-                        name: '🏹 Archer',
-                        value: '**Description:** Precise shooter with high mobility\n**Stats:** 🎯 High agility, ⚔️ Good attack\n**Skills:** Ranged attacks and evasion abilities',
+                        name: '💡 Recommendation',
+                        value: '• **New players**: Start with Warrior for easier survival\n• **Strategic players**: Choose Mage for spell variety\n• **Mobile players**: Pick Archer for hit-and-run tactics',
                         inline: false
                     }
                 )
-                .setFooter({ text: 'Developed by LordK • Each class has unique skills that unlock as you level up' });
+                .setFooter({ 
+                    text: 'Click a button below to choose your class • This choice is permanent! • Developed by LordK',
+                    iconURL: interaction.client.user.displayAvatarURL()
+                })
+                .setTimestamp();
 
+            // Crear botones con customIds únicos y correctos
             const row = new ActionRowBuilder()
                 .addComponents(
                     new ButtonBuilder()
-                        .setCustomId('choose_warrior')
-                        .setLabel('⚔️ Warrior')
-                        .setStyle(ButtonStyle.Danger),
+                        .setCustomId('class_warrior')
+                        .setLabel('⚔️ Choose Warrior')
+                        .setStyle(ButtonStyle.Danger)
+                        .setEmoji('⚔️'),
                     new ButtonBuilder()
-                        .setCustomId('choose_mage')
-                        .setLabel('🔮 Mage')
-                        .setStyle(ButtonStyle.Primary),
+                        .setCustomId('class_mage')
+                        .setLabel('🔮 Choose Mage')
+                        .setStyle(ButtonStyle.Primary)
+                        .setEmoji('🔮'),
                     new ButtonBuilder()
-                        .setCustomId('choose_archer')
-                        .setLabel('🏹 Archer')
+                        .setCustomId('class_archer')
+                        .setLabel('🏹 Choose Archer')
                         .setStyle(ButtonStyle.Success)
+                        .setEmoji('🏹')
                 );
 
             await interaction.reply({ 
@@ -75,7 +103,7 @@ module.exports = {
         } catch (error) {
             console.error('Error in class command:', error);
             await interaction.reply({
-                content: '❌ Error showing classes. Try again later.',
+                content: '❌ Error showing class selection. Please try again later.',
                 ephemeral: true
             });
         }
