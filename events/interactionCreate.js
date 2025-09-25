@@ -1,6 +1,9 @@
 module.exports = {
   name: 'interactionCreate',
-  async execute(interaction, client, logger) {
+  async execute(interaction, client) {
+    // Usar logger desde client
+    const logger = client.logger;
+    
     if (interaction.isChatInputCommand()) {
       const command = client.commands.get(interaction.commandName);
       
