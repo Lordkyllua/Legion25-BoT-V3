@@ -19,7 +19,7 @@ module.exports = {
       .setTitle('🌟 Survivor Bot - Command Center')
       .setDescription('Welcome to your survival adventure! Here are all the commands to enhance your experience:')
       .setThumbnail(interaction.client.user.displayAvatarURL())
-      .setImage('https://i.imgur.com/5D4z8x2.png')
+      .setImage('https://i.imgur.com/txB085t.jpeg')
       .addFields(
         Object.entries(commandCategories).map(([category, commands]) => ({
           name: `${category}`,
