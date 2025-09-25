@@ -3,7 +3,10 @@ const { EmbedBuilder } = require('discord.js');
 
 module.exports = {
   name: 'guildMemberAdd',
-  async execute(member, client, logger) {
+  async execute(member, client) {
+    // Usar logger desde client
+    const logger = client.logger;
+    
     // Give welcome points
     pointsUtil.addPoints(member.id, 100);
     
@@ -27,13 +30,8 @@ module.exports = {
           name: '⚔️ Get Started',
           value: 'Use `/help` to see all available commands and begin your adventure!',
           inline: true
-        },
-        {
-          name: '🌊 Survival Tips',
-          value: '• Use `/rpg` to start your character\n• Check `/shop` for useful items\n• Join clans for team survival'
         }
       )
-      .setImage('https://i.imgur.com/3Q3R4x2.png')
       .setFooter({
         text: 'Survivor Bot • Developed by LordK • Inspired by Tiny Survivors',
         iconURL: client.user.displayAvatarURL()
