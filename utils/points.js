@@ -3,31 +3,39 @@ const fs = require('fs');
 module.exports = {
   getPoints(userId) {
     try {
-      const points = JSON.parse(fs.readFileSync('points.json', 'utf8'));
+      const pointsData = fs.readFileSync('points.json', 'utf8');
+      const points = JSON.parse(pointsData);
       return points[userId] || 0;
     } catch (error) {
+      // Si el archivo no existe o hay error, retornar 0
       return 0;
     }
   },
   
   addPoints(userId, amount) {
-    const points = JSON.parse(fs.readFileSync('points.json', 'utf8'));
-    points[userId] = (points[userId] || 0) + amount;
-    fs.writeFileSync('points.json', JSON.stringify(points, null, 2));
-    return points[userId];
+    try {
+      const pointsData = fs.readFileSync('points.json', 'utf8');
+      const points = JSON.parse(pointsData);
+      points[userId] = (points[userId] || 0) + amount;
+      fs.writeFileSync('points.json', JSON.stringify(points, null, 2));
+      return points[userId];
+    } catch (error) {
+      // Si hay error, crear archivo nuevo
+      const points = { [userId]: amount };
+      fs.writeFileSync('points.json', JSON.stringify(points, null, 2));
+      return amount;
+    }
   },
   
   removePoints(userId, amount) {
-    const points = JSON.parse(fs.readFileSync('points.json', 'utf8'));
-    points[userId] = Math.max((points[userId] || 0) - amount, 0);
-    fs.writeFileSync('points.json', JSON.stringify(points, null, 2));
-    return points[userId];
-  },
-  
-  getLeaderboard(limit = 10) {
-    const points = JSON.parse(fs.readFileSync('points.json', 'utf8'));
-    return Object.entries(points)
-      .sort(([,a], [,b]) => b - a)
-      .slice(0, limit);
+    try {
+      const pointsData = fs.readFileSync('points.json', 'utf8');
+      const points = JSON.parse(pointsData);
+      points[userId] = Math.max((points[userId] || 0) - amount, 0);
+      fs.writeFileSync('points.json', JSON.stringify(points, null, 2));
+      return points[userId];
+    } catch (error) {
+      return 0;
+    }
   }
 };
