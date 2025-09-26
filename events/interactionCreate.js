@@ -3,6 +3,19 @@ module.exports = {
     async execute(interaction, client) {
         const logger = client.logger;
         
+if (interaction.user && !interaction.user.bot) {
+            try {
+                const usersData = client.dataManager.getData('users.json') || {};
+                if (!usersData[interaction.user.id]) {
+                    usersData[interaction.user.id] = {};
+                }
+                usersData[interaction.user.id].lastActive = new Date().toISOString();
+                client.dataManager.saveData('users.json', usersData);
+            } catch (error) {
+                logger.error('Error updating user activity:', error);
+            }
+        }
+        
         if (interaction.isChatInputCommand()) {
             const command = client.commands.get(interaction.commandName);
             
