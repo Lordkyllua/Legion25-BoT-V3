@@ -137,9 +137,9 @@ module.exports = {
 // Función auxiliar para imágenes de clase
 function getClassImage(className) {
     const images = {
-        warrior: 'https://i.imgur.com/3Q3R4x2.png',
-        mage: 'https://i.imgur.com/7V8Q3z2.png', 
-        archer: 'https://i.imgur.com/5Q6W3nq.png'
+        warrior: 'https://i.imgur.com/vnoVyMq.png',
+        mage: 'https://i.imgur.com/z9s6UhW.png', 
+        archer: 'https://i.imgur.com/k76vIXC.png'
     };
     return images[className] || 'https://i.imgur.com/3Q3R4x2.png';
 }
