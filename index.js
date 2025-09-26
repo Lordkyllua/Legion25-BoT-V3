@@ -1,5 +1,3 @@
-[file name]: index.js
-[file content begin]
 const { Client, GatewayIntentBits, Collection, REST, Routes } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
@@ -312,4 +310,3 @@ process.on('unhandledRejection', (reason, promise) => {
 
 // Start the bot
 initializeBot();
-[file content end]
