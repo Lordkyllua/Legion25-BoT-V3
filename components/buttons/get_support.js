@@ -13,7 +13,7 @@ module.exports = {
                 .addFields(
                     {
                         name: '🎮 About the Inspiration',
-                        value: 'This bot is inspired by **Tiny Survivors** by **Micro Hunter** - an incremental idle survival game.'
+                        value: 'This bot is inspired by **Micro Hunter** - an incremental idle survival game.'
                     },
                     {
                         name: '📖 Common Issues & Solutions',
@@ -21,7 +21,7 @@ module.exports = {
                             '• **Commands not working?** Check bot permissions',
                             '• **Class selection?** You can only choose once',
                             '• **Evolution system?** Available at levels 25, 50, 75',
-                            '• **Gameplay questions?** Use `/tinysurvivors` for inspiration info'
+                            '• **Gameplay questions?** Use `/microhunter` for game info'
                         ].join('\n')
                     },
                     {
@@ -36,14 +36,14 @@ module.exports = {
                     {
                         name: '🌐 Useful Links',
                         value: [
-                            '• [Tiny Survivors Game](https://www.micro-hunter.com/?lang=en)',
+                            '• [Micro Hunter Game](https://www.micro-hunter.com/?lang=en)',
                             '• [Micro Hunter Website](https://www.micro-hunter.com/)',
-                            '• [More Micro Hunter Games](https://www.micro-hunter.com/games.html)'
+                            '• [More Games](https://www.micro-hunter.com/games.html)'
                         ].join('\n')
                     }
                 )
                 .setFooter({
-                    text: 'Inspired by Tiny Survivors by Micro Hunter • Bot developed by LordK',
+                    text: 'Inspired by Micro Hunter • Bot developed by LordK',
                     iconURL: client.user.displayAvatarURL()
                 })
                 .setTimestamp();
@@ -56,7 +56,7 @@ module.exports = {
         } catch (error) {
             console.error('Error in get_support button:', error);
             await interaction.editReply({ 
-                content: '❌ Error loading support information. Please try the Tiny Survivors game while we fix this!',
+                content: '❌ Error loading support information. Please try the Micro Hunter game while we fix this!',
                 components: [] 
             });
         }
