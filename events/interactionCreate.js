@@ -1,5 +1,3 @@
-[file name]: interactionCreate.js
-[file content begin]
 module.exports = {
     name: 'interactionCreate',
     async execute(interaction, client) {
@@ -58,7 +56,7 @@ module.exports = {
                     }
                 }
             }
-            // Manejar botones de exploración
+            // Manejar botones de exploración (NUEVO)
             else if (interaction.customId.startsWith('explore_')) {
                 const button = client.buttons.get('explore_');
                 if (button) {
@@ -69,7 +67,7 @@ module.exports = {
                     }
                 }
             }
-            // === [ CORREGIDO: Botones de tienda con manejo de errores mejorado ] ===
+            // === [ INICIO: Nuevos botones de la tienda ] ===
             else if (interaction.customId === 'shop_show_all') {
                 const button = client.buttons.get('shop_show_all');
                 if (button) {
@@ -77,20 +75,7 @@ module.exports = {
                         await button.execute(interaction, client);
                     } catch (error) {
                         logger.error(`Shop show all error: ${error.message}`);
-                        if (interaction.deferred || interaction.replied) {
-                            await interaction.editReply({ 
-                                content: '❌ Error loading all items.', 
-                                components: [] 
-                            });
-                        } else {
-                            await interaction.reply({ 
-                                content: '❌ Error loading all items.', 
-                                ephemeral: true 
-                            });
-                        }
                     }
-                } else {
-                    logger.warning(`Button shop_show_all not found in collection`);
                 }
             }
             else if (interaction.customId === 'shop_my_class') {
@@ -100,23 +85,10 @@ module.exports = {
                         await button.execute(interaction, client);
                     } catch (error) {
                         logger.error(`Shop my class error: ${error.message}`);
-                        if (interaction.deferred || interaction.replied) {
-                            await interaction.editReply({ 
-                                content: '❌ Error filtering items by class.', 
-                                components: [] 
-                            });
-                        } else {
-                            await interaction.reply({ 
-                                content: '❌ Error filtering items by class.', 
-                                ephemeral: true 
-                            });
-                        }
                     }
-                } else {
-                    logger.warning(`Button shop_my_class not found in collection`);
                 }
             }
-            // === [ FIN: Botones de tienda ] ===
+            // === [ FIN: Nuevos botones de la tienda ] ===
             // Manejar botón de soporte
             else if (interaction.customId === 'get_support') {
                 const button = client.buttons.get('get_support');
@@ -142,42 +114,14 @@ module.exports = {
             }
         }
         else if (interaction.isStringSelectMenu()) {
-            // === [ CORREGIDO: Manejo específico para shopCategory ] ===
-            if (interaction.customId === 'shopCategory') {
-                const selectMenu = client.selectMenus.get('shopCategory');
-                if (selectMenu) {
-                    try {
-                        await selectMenu.execute(interaction, client);
-                    } catch (error) {
-                        logger.error(`Shop category error: ${error.message}`);
-                        if (interaction.deferred || interaction.replied) {
-                            await interaction.editReply({ 
-                                content: '❌ Error loading category items.', 
-                                components: [] 
-                            });
-                        } else {
-                            await interaction.reply({ 
-                                content: '❌ Error loading category items.', 
-                                ephemeral: true 
-                            });
-                        }
-                    }
-                } else {
-                    logger.warning(`Select menu shopCategory not found in collection`);
-                }
-            }
-            // Manejar otros select menus existentes
-            else {
-                const selectMenu = client.selectMenus.get(interaction.customId);
-                if (selectMenu) {
-                    try {
-                        await selectMenu.execute(interaction, client);
-                    } catch (error) {
-                        logger.error(`Select menu error: ${error.message}`);
-                    }
+            const selectMenu = client.selectMenus.get(interaction.customId);
+            if (selectMenu) {
+                try {
+                    await selectMenu.execute(interaction, client);
+                } catch (error) {
+                    logger.error(`Select menu error: ${error.message}`);
                 }
             }
         }
     }
 };
-[file content end]
