@@ -42,7 +42,7 @@ module.exports = {
                     value: 'Experience the original incremental adventure that inspired this bot!'
                 }
             )
-            .setImage('https://i.imgur.com/r8Q7W4k.png')
+            .setImage('https://kg-web-cdn.akamaized.net/master/official-website/l-official-frontend/public/images/logo-icon_m.jpg')
             .setFooter({ 
                 text: 'Tiny Survivors by Micro Hunter • Bot developed by LordK', 
                 iconURL: interaction.client.user.displayAvatarURL() 
