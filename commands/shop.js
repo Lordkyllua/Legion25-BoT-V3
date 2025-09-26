@@ -1,11 +1,11 @@
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { SlashCommandBuilder, ActionRowBuilder, StringSelectMenuBuilder, EmbedBuilder } = require('discord.js');
 const fs = require('fs');
 const rpgUtil = require('../utils/rpg');
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('shop')
-        .setDescription('Browse all available items in the shop'),
+        .setDescription('Browse and buy items with your gold'),
     
     async execute(interaction) {
         try {
@@ -13,7 +13,7 @@ module.exports = {
             if (!fs.existsSync(storePath)) {
                 return await interaction.reply({
                     content: '❌ The shop is currently unavailable.',
-                    flags: 64
+                    ephemeral: true
                 });
             }
             
@@ -21,13 +21,22 @@ module.exports = {
             const userId = interaction.user.id;
             const profile = rpgUtil.getUserProfile(userId);
             
-            // Agrupar por categoría - MOSTRAR TODOS LOS ITEMS
-            const categories = [...new Set(store.items.map(item => item.category))];
+            // Categorías organizadas
+            const categories = [
+                { name: 'Consumables', emoji: '🧪', description: 'Potions and temporary boosts' },
+                { name: 'Warrior Weapons', emoji: '⚔️', description: 'Weapons for warriors' },
+                { name: 'Mage Weapons', emoji: '🔮', description: 'Weapons for mages' },
+                { name: 'Archer Weapons', emoji: '🏹', description: 'Weapons for archers' },
+                { name: 'Armor', emoji: '🛡️', description: 'Protective gear for all classes' },
+                { name: 'Accessories', emoji: '💍', description: 'Rings, amulets, and other items' },
+                { name: 'Bundles', emoji: '📦', description: 'Special item bundles' }
+            ];
             
-            const categoryOptions = categories.map(category => ({
-                label: category,
-                value: category,
-                description: `Browse ${category} items`
+            const categoryOptions = categories.map(cat => ({
+                label: cat.name,
+                value: cat.name,
+                description: cat.description,
+                emoji: cat.emoji
             }));
             
             const selectMenu = new StringSelectMenuBuilder()
@@ -37,59 +46,47 @@ module.exports = {
             
             const row = new ActionRowBuilder().addComponents(selectMenu);
             
-            // Botón para ver todos los items sin filtrar
-            const buttonRow = new ActionRowBuilder().addComponents(
-                new ButtonBuilder()
-                    .setCustomId('shop_show_all')
-                    .setLabel('📋 View All Items')
-                    .setStyle(ButtonStyle.Secondary),
-                new ButtonBuilder()
-                    .setCustomId('shop_my_class')
-                    .setLabel('🎯 Items for My Class')
-                    .setStyle(ButtonStyle.Primary)
-            );
-            
             const embed = new EmbedBuilder()
-                .setTitle('🛍️ Survivor Shop - All Items')
-                .setDescription('**Browse all available items!**\nYou can see everything, but can only purchase items for your class.')
+                .setTitle('🛍️ Survivor Shop')
+                .setDescription('Buy items with the **gold** you earn from quests and exploration!\n\n**💡 Tip:** Some items are class-specific and have level requirements.')
                 .setColor(0x00FF00)
                 .addFields(
                     {
-                        name: '💰 Your Gold',
-                        value: `**${profile.gold}** 🥇 available`,
+                        name: '💰 Your Balance',
+                        value: `**${profile.gold} gold** 🥇 available`,
                         inline: true
                     },
                     {
                         name: '🎯 Your Class',
-                        value: profile.class ? `**${profile.className}**` : '**No class chosen**',
+                        value: profile.className || 'Not chosen yet',
                         inline: true
                     },
                     {
-                        name: '📦 Available Categories',
-                        value: categories.map(cat => `• ${cat}`).join('\n') || 'No categories',
-                        inline: false
+                        name: '📊 Your Level',
+                        value: `Level ${profile.level}`,
+                        inline: true
                     },
                     {
-                        name: 'ℹ️ Purchase Rules',
-                        value: '• You can **view all items**\n• You can only **buy items for your class**\n• Some items require **specific levels**\n• Use `/buy <item_id>` to purchase',
+                        name: '🛒 How to Buy',
+                        value: '1. Select a category below\n2. Note the item ID\n3. Use `/buy <item_id>` to purchase\n4. Check requirements before buying!',
                         inline: false
                     }
                 )
                 .setFooter({ 
-                    text: `Total items: ${store.items.length} • Use the dropdown to browse • Developed by LordK`, 
+                    text: `Use /quest and /explore to earn more gold! • Developed by LordK`, 
                     iconURL: interaction.client.user.displayAvatarURL() 
                 });
 
             await interaction.reply({ 
                 embeds: [embed], 
-                components: [row, buttonRow] 
+                components: [row] 
             });
             
         } catch (error) {
             console.error('Error in shop command:', error);
             await interaction.reply({
                 content: '❌ Error loading the shop. Please try again later.',
-                flags: 64
+                ephemeral: true
             });
         }
     }
