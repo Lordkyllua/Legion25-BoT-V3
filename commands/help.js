@@ -11,9 +11,12 @@ module.exports = {
                 { name: 'rpg', description: 'View your character profile and stats' },
                 { name: 'class', description: 'Choose your RPG class (Warrior, Mage, Archer)' },
                 { name: 'quest', description: 'Go on adventures to earn EXP, gold, and points' },
+                { name: 'daily', description: 'Claim your daily reward' },
+                { name: 'explore', description: 'Explore different locations for rewards' },
+                { name: 'train', description: 'Train your skills to become stronger' },
                 { name: 'evolution', description: 'Check available class evolutions' },
                 { name: 'evolve', description: 'Evolve your class to more powerful forms' },
-                { name: 'tinysurvivors', description: 'Learn about the Tiny Survivors inspiration' }
+                { name: 'tinysurvivors', description: 'Learn about my Tiny Survivors game' }
             ],
             '💰 Economy & Shop': [
                 { name: 'shop', description: 'Browse items available for purchase' },
@@ -21,6 +24,11 @@ module.exports = {
                 { name: 'inventory', description: 'View your purchased items' },
                 { name: 'ranking', description: 'Check the points leaderboard' },
                 { name: 'coinflip', description: 'Bet points on a coin flip game' }
+            ],
+            '⚔️ Battle System': [
+                { name: 'fight', description: 'Challenge another player to a battle' },
+                { name: 'duel', description: 'Duel against AI opponents' },
+                { name: 'boss', description: 'Fight against powerful bosses' }
             ],
             '👥 Social & Roles': [
                 { name: 'roles', description: 'Self-assign roles from available options' }
@@ -31,18 +39,15 @@ module.exports = {
                 { name: 'warnings', description: 'View user warning history' },
                 { name: 'mute', description: 'Temporarily mute a user (Moderators only)' }
             ],
-            '🎉 Fun & Entertainment': [
-                { name: 'meme', description: 'Get a random meme from Reddit' },
-                { name: 'quote', description: 'Receive an inspirational quote' },
-                { name: 'gif', description: 'Search for GIFs' },
-                { name: 'fight', description: 'Challenge another player to a battle' }
+            '🎉 Fun': [
+                { name: 'meme', description: 'Get a random meme' }
             ]
         };
 
         const helpEmbed = new EmbedBuilder()
             .setColor(0x6a0dad)
             .setTitle('🌟 Survivor Bot - Command Center')
-            .setDescription('Welcome to your survival adventure! Inspired by **Tiny Survivors** by **Micro Hunter**')
+            .setDescription('Welcome to your survival adventure! Inspired by **Tiny Survivors** - my game on Micro Hunter')
             .setThumbnail(interaction.client.user.displayAvatarURL())
             .addFields(
                 Object.entries(commandCategories).map(([category, commands]) => ({
@@ -54,22 +59,23 @@ module.exports = {
             .addFields({
                 name: '💫 Quick Start Guide',
                 value: [
-                    '1. **Start your journey**: Use `/class` to choose your class',
-                    '2. **Build your character**: Use `/quest` to earn EXP and gold',
-                    '3. **Gear up**: Visit `/shop` to buy powerful items',
-                    '4. **Evolve**: Use `/evolution` at level 25, 50, and 75',
-                    '5. **Learn more**: Use `/tinysurvivors` about the inspiration'
+                    '1. **Start**: Use `/class` to choose your class',
+                    '2. **Daily**: Use `/daily` for free rewards',
+                    '3. **Progress**: Use `/quest` and `/explore` to earn EXP/gold',
+                    '4. **Train**: Use `/train` to improve your skills',
+                    '5. **Battle**: Use `/fight` or `/duel` for combat',
+                    '6. **Evolve**: Use `/evolution` at level 25, 50, and 75'
                 ].join('\n')
             })
             .setFooter({
-                text: 'Inspired by Tiny Survivors by Micro Hunter • Developed by LordK',
+                text: 'Tiny Survivors game and bot both developed by LordK',
                 iconURL: interaction.client.user.displayAvatarURL()
             })
             .setTimestamp();
 
         const supportButton = new ActionRowBuilder().addComponents(
             new ButtonBuilder()
-                .setLabel('🎮 Play Tiny Survivors')
+                .setLabel('🎮 Play My Game')
                 .setStyle(ButtonStyle.Link)
                 .setURL('https://www.micro-hunter.com/?lang=en'),
             new ButtonBuilder()
