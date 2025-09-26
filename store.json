@@ -1,83 +1,70 @@
 {
-  "items": [
-    {
-      "id": 1,
-      "name": "Small Health Potion",
-      "price": 25,
-      "currency": "gold",
-      "type": "consumable",
-      "category": "Consumables",
-      "description": "Restores 30 HP",
-      "effect": "heal:30",
-      "class": "all"
-    },
-    {
-      "id": 2,
-      "name": "Large Health Potion",
-      "price": 60,
-      "currency": "gold",
-      "type": "consumable",
-      "category": "Consumables",
-      "description": "Restores 70 HP",
-      "effect": "heal:70",
-      "class": "all"
-    },
-    {
-      "id": 3,
-      "name": "Mana Potion",
-      "price": 40,
-      "currency": "gold",
-      "type": "consumable",
-      "category": "Consumables",
-      "description": "Restores 50 MP",
-      "effect": "mana:50",
-      "class": "mage"
-    },
-    {
-      "id": 4,
-      "name": "Strength Elixir",
-      "price": 100,
-      "currency": "gold",
-      "type": "consumable",
-      "category": "Consumables",
-      "description": "Increases attack by 15% for 30 min",
-      "effect": "buff:attack:15:1800",
-      "class": "all"
-    },
-    {
-      "id": 5,
-      "name": "Apprentice Sword",
-      "price": 150,
-      "currency": "gold",
-      "type": "equipment",
-      "category": "Warrior Weapons",
-      "description": "Basic sword for novice warriors",
-      "effect": "attack:10",
-      "class": "warrior"
-    },
-    {
-      "id": 6,
-      "name": "Battle Axe",
-      "price": 300,
-      "currency": "gold",
-      "type": "equipment",
-      "category": "Warrior Weapons",
-      "description": "Powerful axe for warriors",
-      "effect": "attack:25",
-      "class": "warrior",
-      "requiredLevel": 5
-    },
-    {
-      "id": 7,
-      "name": "Legendary Sword",
-      "price": 800,
-      "currency": "gold",
-      "type": "equipment",
-      "category": "Warrior Weapons",
-      "description": "Legendary sword of great heroes",
-      "effect": "attack:45",
-      "class": "warrior",
-      "requiredLevel": 15
-    }
-  ]
+  "id": 8,
+  "name": "Arcane Staff",
+  "price": 200,
+  "currency": "gold",
+  "type": "equipment", 
+  "category": "Mage Weapons",
+  "description": "Staff imbued with magical energy",
+  "effect": "magic:20",
+  "class": "mage",
+  "requiredLevel": 3
+},
+{
+  "id": 9, 
+  "name": "Wizard Robe",
+  "price": 150,
+  "currency": "gold",
+  "type": "equipment",
+  "category": "Mage Armor",
+  "description": "Robe that enhances magical power",
+  "effect": "magic:15,defense:5",
+  "class": "mage",
+  "requiredLevel": 2
+},
+{
+  "id": 10,
+  "name": "Recurve Bow", 
+  "price": 180,
+  "currency": "gold",
+  "type": "equipment",
+  "category": "Archer Weapons",
+  "description": "Precision bow for ranged attacks",
+  "effect": "attack:18,agility:10",
+  "class": "archer",
+  "requiredLevel": 3
+},
+{
+  "id": 11,
+  "name": "Hunter's Cloak",
+  "price": 120,
+  "currency": "gold",
+  "type": "equipment",
+  "category": "Archer Armor", 
+  "description": "Cloak that enhances mobility",
+  "effect": "agility:15,defense:3",
+  "class": "archer",
+  "requiredLevel": 2
+},
+{
+  "id": 12,
+  "name": "Fireball Scroll",
+  "price": 80,
+  "currency": "gold", 
+  "type": "consumable",
+  "category": "Mage Items",
+  "description": "Scroll that casts a powerful fireball",
+  "effect": "damage:40",
+  "class": "mage"
+},
+{
+  "id": 13,
+  "name": "Poison Arrows",
+  "price": 60,
+  "currency": "gold",
+  "type": "consumable", 
+  "category": "Archer Items",
+  "description": "Arrows coated with deadly poison",
+  "effect": "damage:25,dot:10",
+  "class": "archer"
 }
