@@ -16,7 +16,7 @@ module.exports = {
                 { name: 'train', description: 'Train your skills to become stronger' },
                 { name: 'evolution', description: 'Check available class evolutions' },
                 { name: 'evolve', description: 'Evolve your class to more powerful forms' },
-                { name: 'tinysurvivors', description: 'Learn about my Tiny Survivors game' }
+                { name: 'microhunter', description: 'Learn about the Micro Hunter game' }
             ],
             '💰 Economy & Shop': [
                 { name: 'shop', description: 'Browse items available for purchase' },
@@ -47,7 +47,7 @@ module.exports = {
         const helpEmbed = new EmbedBuilder()
             .setColor(0x6a0dad)
             .setTitle('🌟 Survivor Bot - Command Center')
-            .setDescription('Welcome to your survival adventure! Inspired by **Tiny Survivors** - my game on Micro Hunter')
+            .setDescription('Welcome to your survival adventure! Inspired by **Micro Hunter**')
             .setThumbnail(interaction.client.user.displayAvatarURL())
             .addFields(
                 Object.entries(commandCategories).map(([category, commands]) => ({
@@ -68,14 +68,14 @@ module.exports = {
                 ].join('\n')
             })
             .setFooter({
-                text: 'Tiny Survivors game and bot both developed by LordK',
+                text: 'Micro Hunter game • Bot developed by LordK',
                 iconURL: interaction.client.user.displayAvatarURL()
             })
             .setTimestamp();
 
         const supportButton = new ActionRowBuilder().addComponents(
             new ButtonBuilder()
-                .setLabel('🎮 Play My Game')
+                .setLabel('🎮 Play Micro Hunter')
                 .setStyle(ButtonStyle.Link)
                 .setURL('https://www.micro-hunter.com/?lang=en'),
             new ButtonBuilder()
