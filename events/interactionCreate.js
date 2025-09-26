@@ -56,6 +56,17 @@ module.exports = {
                     }
                 }
             }
+            // Manejar botones de exploración (NUEVO)
+            else if (interaction.customId.startsWith('explore_')) {
+                const button = client.buttons.get('explore_');
+                if (button) {
+                    try {
+                        await button.execute(interaction, client);
+                    } catch (error) {
+                        logger.error(`Explore button error: ${error.message}`);
+                    }
+                }
+            }
             // Manejar botón de soporte
             else if (interaction.customId === 'get_support') {
                 const button = client.buttons.get('get_support');
