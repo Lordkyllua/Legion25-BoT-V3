@@ -13,9 +13,9 @@ module.exports = {
         logger.success(`Logged in as ${botName}`);
         logger.info(`Serving ${serverCount} servers and ${userCount} users`);
         
-        // Status rotation with correct reference
+        // Status rotation with correct credit
         const statuses = [
-            { name: 'Tiny Survivors by Micro Hunter', type: ActivityType.Playing, emoji: '🎮' },
+            { name: 'Micro Hunter', type: ActivityType.Playing, emoji: '🎮' },
             { name: 'survival adventures', type: ActivityType.Playing, emoji: '⚔️' },
             { name: 'with class evolutions', type: ActivityType.Competing, emoji: '🛡️' },
             { name: 'the item shop', type: ActivityType.Watching, emoji: '🛍️' },
@@ -46,8 +46,9 @@ module.exports = {
 🤖 Name: ${botName}
 🏠 Servers: ${serverCount}
 👥 Users: ${userCount}
-🎮 Inspired by: Tiny Survivors (Micro Hunter)
-🚀 Status: Ready for survival adventures!
+🎮 Inspired by: Micro Hunter
+👨‍💻 Bot Developer: LordK
+🚀 Status: Ready for adventures!
 ━━━━━━━━━━━━━━━━━━━━
         `);
     }
