@@ -38,7 +38,7 @@ module.exports = {
                     ].join('\n') 
                 }
             )
-            .setImage('https://i.imgur.com/r8Q7W4k.png')
+            .setImage('https://kg-web-cdn.akamaized.net/master/official-website/l-official-frontend/public/images/logo-icon_m.jpg')
             .setFooter({ 
                 text: 'Micro Hunter game • Bot developed by LordK', 
                 iconURL: interaction.client.user.displayAvatarURL() 
