@@ -8,20 +8,23 @@ module.exports = {
         
         const botName = client.user.tag;
         const serverCount = client.guilds.cache.size;
-        const userCount = client.users.cache.size;
+        
+        // Count active users from data
+        const usersData = client.dataManager.getData('users.json') || {};
+        const userCount = Object.keys(usersData).length;
         
         logger.success(`Logged in as ${botName}`);
         logger.info(`Serving ${serverCount} servers and ${userCount} users`);
         
-        // Status rotation with correct credit
+        // Enhanced status rotation
         const statuses = [
-            { name: 'Micro Hunter', type: ActivityType.Playing, emoji: '🎮' },
+            { name: 'Tiny Survivors - My Game', type: ActivityType.Playing, emoji: '🎮' },
+            { name: `${userCount} adventurers`, type: ActivityType.Watching, emoji: '👥' },
             { name: 'survival adventures', type: ActivityType.Playing, emoji: '⚔️' },
             { name: 'with class evolutions', type: ActivityType.Competing, emoji: '🛡️' },
             { name: 'the item shop', type: ActivityType.Watching, emoji: '🛍️' },
             { name: `${serverCount} servers`, type: ActivityType.Watching, emoji: '🌐' },
-            { name: '/help for commands', type: ActivityType.Listening, emoji: '📖' },
-            { name: 'RPG quests', type: ActivityType.Playing, emoji: '🏹' }
+            { name: '/help for commands', type: ActivityType.Listening, emoji: '📖' }
         ];
 
         let currentIndex = 0;
@@ -37,19 +40,33 @@ module.exports = {
             currentIndex = (currentIndex + 1) % statuses.length;
         };
 
+        // Update status immediately and every 60 seconds
         updateStatus();
-        setInterval(updateStatus, 60000);
+        const statusInterval = setInterval(updateStatus, 60000);
+        
+        // Store interval for cleanup
+        client.statusInterval = statusInterval;
+        
+        // Enhanced startup message with data stats
+        const pointsData = client.dataManager.getData('points.json') || {};
+        const totalPoints = Object.values(pointsData).reduce((sum, points) => sum + points, 0);
         
         console.log(`
 ✨ Bot is now online!
-━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🤖 Name: ${botName}
 🏠 Servers: ${serverCount}
-👥 Users: ${userCount}
-🎮 Inspired by: Micro Hunter
-👨‍💻 Bot Developer: LordK
+👥 Registered Users: ${userCount}
+💰 Total Points: ${totalPoints}
+🎮 Developer: LordK
+💾 Data System: Robust v2.0
 🚀 Status: Ready for adventures!
-━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         `);
+        
+        // Periodic backup every hour
+        client.backupInterval = setInterval(() => {
+            client.dataManager.createBackup();
+        }, 60 * 60 * 1000); // 1 hour
     }
 };
