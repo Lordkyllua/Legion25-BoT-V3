@@ -67,6 +67,28 @@ module.exports = {
                     }
                 }
             }
+            // === [ INICIO: Nuevos botones de la tienda ] ===
+            else if (interaction.customId === 'shop_show_all') {
+                const button = client.buttons.get('shop_show_all');
+                if (button) {
+                    try {
+                        await button.execute(interaction, client);
+                    } catch (error) {
+                        logger.error(`Shop show all error: ${error.message}`);
+                    }
+                }
+            }
+            else if (interaction.customId === 'shop_my_class') {
+                const button = client.buttons.get('shop_my_class');
+                if (button) {
+                    try {
+                        await button.execute(interaction, client);
+                    } catch (error) {
+                        logger.error(`Shop my class error: ${error.message}`);
+                    }
+                }
+            }
+            // === [ FIN: Nuevos botones de la tienda ] ===
             // Manejar botón de soporte
             else if (interaction.customId === 'get_support') {
                 const button = client.buttons.get('get_support');
