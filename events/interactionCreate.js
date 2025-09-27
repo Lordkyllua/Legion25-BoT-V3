@@ -113,6 +113,18 @@ if (interaction.user && !interaction.user.bot) {
                     }
                 }
             }
+
+// En el bloque de interacciones de botones, añade:
+else if (interaction.customId.startsWith('inventory_')) {
+    const button = client.buttons.get('inventory_');
+    if (button) {
+        try {
+            await button.execute(interaction, client);
+        } catch (error) {
+            logger.error(`Inventory button error: ${error.message}`);
+        }
+    }
+}
             // Manejar otros botones
             else {
                 const buttonName = interaction.customId.split('_')[0];
