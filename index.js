@@ -305,6 +305,22 @@ const initializeBot = async () => {
         // Login to Discord
         await client.login(process.env.DISCORD_TOKEN);
         
+        // Al final del archivo index.js, después de client.login(), agregar:
+
+// Iniciar sistema de backup automático
+const backupSystem = require('./utils/backup');
+
+// Backup automático cada 24 horas
+backupSystem.startAutoBackup(24);
+
+// Backup inicial al iniciar
+setTimeout(() => {
+    const result = backupSystem.createBackup();
+    if (result.success) {
+        console.log(`✅ Initial backup created: ${result.backupId}`);
+    }
+}, 5000);
+
         // Register slash commands
         const rest = new REST().setToken(process.env.DISCORD_TOKEN);
         
