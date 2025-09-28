@@ -1,49 +1,39 @@
-# Legion25-BoT-V3
+# 🎮 Legion25 Bot v2.0
 
-# 🎮 Survivor Bot
-
-A beautiful Discord bot inspired by Tiny Survivors, featuring RPG elements, economy system, and interactive commands.
+> *"Where adventure meets discord - A Micro Hunter inspired RPG experience"*
 
 ## ✨ Features
 
-- **🎮 RPG System**: Character progression, quests, and battles
-- **🛍️ Economy**: Points system, shop, and inventory
-- **👥 Social**: Role management and clan system
-- **🛡️ Moderation**: Warning and moderation tools
-- **🎉 Fun**: Memes, quotes, and entertainment
+- **🏹 RPG System**: Choose from Mage, Warrior, or Archer classes
+- **⭐ Level Progression**: Evolve your character up to level 100
+- **🛒 Item Shop**: Purchase weapons, armor, and consumables with gold
+- **📦 Inventory Management**: Equip and manage your items
+- **🏆 Ranking System**: Compete with other players
+- **🎯 Interactive Menus**: Beautiful and intuitive interfaces
+- **⚔️ Quest System**: Complete adventures for rewards
+- **🛡️ Role Management**: Easy role selection system
 
-## 🚀 Deployment on Railway
+## 🎲 Commands
 
-1. **Fork this repository**
-2. **Go to [Railway](https://railway.app)**
-3. **Create new project from GitHub**
-4. **Add environment variable:**
-   - `DISCORD_TOKEN`: Your Discord bot token
+Use `/help` to see all available commands in an interactive menu!
 
-5. **Deploy!** The bot will start automatically.
+## 🎨 Design Philosophy
 
-## 🔧 Environment Variables
+This bot was created with passion by **LordK**, inspired by the amazing game **Micro Hunter**. The goal was to bring the excitement of RPG gaming directly to Discord with beautiful interfaces and engaging gameplay mechanics.
 
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `DISCORD_TOKEN` | Your Discord bot token | ✅ |
+## 🚀 Setup
 
-## 📋 Commands
+1. Invite the bot to your server
+2. Set `DISCORD_TOKEN` in Railway
+3. Use `/roleadmin` to configure selectable roles
+4. Start your adventure with `/rpg`
 
-Use `/help` in Discord to see all available commands!
+## 🎯 Credits
 
-## 🎯 Inspired by Tiny Survivors
-
-This bot brings the survival adventure experience to Discord with:
-- Wave-based progression system
-- Survival-themed items and upgrades
-- Clan cooperation features
-- RPG character development
-
-## 💫 Developed by LordK
-
-With love and inspiration from the amazing Tiny Survivors game!
+**Developer**: LordK  
+**Inspiration**: Micro Hunter Game  
+**Special Thanks**: The Discord.js community and all beta testers
 
 ---
 
-**Enjoy your survival adventure! 🌊⚔️🛡️**
+*"Every great adventure begins with a single command"* - LordK
