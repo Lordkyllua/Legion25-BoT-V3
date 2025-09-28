@@ -1,17 +1,19 @@
 {
-  "name": "discord-survivor-bot",
-  "version": "1.0.0",
-  "description": "A beautiful Discord bot inspired by Tiny Survivors with RPG elements",
+  "name": "legion25-bot",
+  "version": "3.0.0",
+  "description": "An advanced Discord RPG bot with MongoDB database",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "node index.js"
+    "start": "node index.js"
   },
   "dependencies": {
     "discord.js": "^14.14.1",
-    "axios": "^1.6.0"
+    "axios": "^1.6.0",
+    "colors": "^1.4.0",
+    "mongodb": "^6.3.0",
+    "mongoose": "^8.0.3"
   },
-  "keywords": ["discord", "bot", "rpg", "survivor", "games"],
+  "keywords": ["discord", "bot", "rpg", "microhunter", "mongodb"],
   "author": "LordK",
   "license": "MIT"
 }
