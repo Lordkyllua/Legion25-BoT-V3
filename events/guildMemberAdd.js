@@ -12,7 +12,19 @@ module.exports = {
     
     logger.info(`New member joined: ${member.user.tag} in ${member.guild.name}`);
     
-    const welcomeChannel = member.guild.systemChannel;
+    const welcomeChannel = member.guild.systemChannel;module.exports = {
+    name: 'guildMemberAdd',
+    async execute(member) {
+        const channel = member.guild.systemChannel;
+        if (channel) {
+            try {
+                await channel.send(`Welcome to the server, ${member}! Use \`/help\` to see what I can do. 🎉`);
+            } catch (error) {
+                console.error('Could not send welcome message:', error);
+            }
+        }
+    },
+};
     if (!welcomeChannel) return;
 
     const welcomeEmbed = new EmbedBuilder()
