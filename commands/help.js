@@ -3,91 +3,51 @@ const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, Butt
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('help')
-        .setDescription('Discover all the amazing features of Survivor Bot!'),
-    
+        .setDescription('Get help with all commands and features'),
     async execute(interaction) {
-        const commandCategories = {
-            '🎮 RPG System': [
-                { name: 'rpg', description: 'View your character profile and stats' },
-                { name: 'class', description: 'Choose your RPG class (Warrior, Mage, Archer)' },
-                { name: 'quest', description: 'Go on adventures to earn EXP, gold, and points' },
-                { name: 'daily', description: 'Claim your daily reward' },
-                { name: 'explore', description: 'Explore different locations for rewards' },
-                { name: 'train', description: 'Train your skills to become stronger' },
-                { name: 'evolution', description: 'Check available class evolutions' },
-                { name: 'evolve', description: 'Evolve your class to more powerful forms' },
-                { name: 'microhunter', description: 'Learn about the Micro Hunter game' }
-            ],
-            '💰 Economy & Shop': [
-                { name: 'shop', description: 'Browse items available for purchase' },
-                { name: 'buy', description: 'Purchase items with your gold' },
-                { name: 'inventory', description: 'View your purchased items' },
-                { name: 'ranking', description: 'Check the points leaderboard' },
-                { name: 'coinflip', description: 'Bet points on a coin flip game' }
-            ],
-            '⚔️ Battle System': [
-                { name: 'fight', description: 'Challenge another player to a battle' },
-                { name: 'duel', description: 'Duel against AI opponents' },
-                { name: 'boss', description: 'Fight against powerful bosses' }
-            ],
-            '👥 Social & Roles': [
-                { name: 'roles', description: 'Self-assign roles from available options' }
-            ],
-            '🛡️ Moderation': [
-                { name: 'roleadmin', description: 'Admin panel for managing assignable roles' },
-                { name: 'warn', description: 'Issue warnings to users (Moderators only)' },
-                { name: 'warnings', description: 'View user warning history' },
-                { name: 'mute', description: 'Temporarily mute a user (Moderators only)' }
-            ],
-            '🎉 Fun': [
-                { name: 'meme', description: 'Get a random meme' }
-            ]
-        };
-
-        const helpEmbed = new EmbedBuilder()
-            .setColor(0x6a0dad)
-            .setTitle('🌟 Survivor Bot - Command Center')
-            .setDescription('Welcome to your survival adventure! Inspired by **Micro Hunter**')
-            .setThumbnail(interaction.client.user.displayAvatarURL())
+        const embed = new EmbedBuilder()
+            .setTitle('🎮 Legion25 Bot - Command Center')
+            .setDescription(`**Welcome to Legion25 RPG Bot!**\n\n*"Where every command begins a new adventure..."*\n\nBrowse through the categories below to learn about all available features.`)
+            .setColor(0x00AE86)
+            .setThumbnail('https://i.imgur.com/xRk7Qq3.png')
             .addFields(
-                Object.entries(commandCategories).map(([category, commands]) => ({
-                    name: `${category}`,
-                    value: commands.map(cmd => `**/${cmd.name}** - ${cmd.description}`).join('\n'),
-                    inline: false
-                }))
+                { 
+                    name: '🛠️ General Commands', 
+                    value: '```/help - Show this help menu\n/ranking - View gold leaderboard\n/roles - Select server roles\n/shop - Browse magical items\n/buy - Purchase items with gold\n/inventory - Manage your items\n/coinflip - Bet gold on coin flip\n/gif - Get fun GIFs```' 
+                },
+                { 
+                    name: '⚔️ RPG System', 
+                    value: '```/rpg - Character management\n/microhunter - Game information\n/quest - Start adventures\n/fight - Battle monsters\n/equip - Equip items\n/use - Use consumables```' 
+                },
+                { 
+                    name: '🛡️ Administration', 
+                    value: '```/roleadmin - Manage roles\n/warn - Warn users\n/warnings - Check warnings\n/mute - Moderate users```' 
+                }
             )
-            .addFields({
-                name: '💫 Quick Start Guide',
-                value: [
-                    '1. **Start**: Use `/class` to choose your class',
-                    '2. **Daily**: Use `/daily` for free rewards',
-                    '3. **Progress**: Use `/quest` and `/explore` to earn EXP/gold',
-                    '4. **Train**: Use `/train` to improve your skills',
-                    '5. **Battle**: Use `/fight` or `/duel` for combat',
-                    '6. **Evolve**: Use `/evolution` at level 25, 50, and 75'
-                ].join('\n')
-            })
-            .setFooter({
-                text: 'Micro Hunter game • Bot developed by LordK',
-                iconURL: interaction.client.user.displayAvatarURL()
-            })
-            .setTimestamp();
+            .setFooter({ 
+                text: 'Developed with ❤️ by LordK • Inspired by Micro Hunter',
+                iconURL: 'https://i.imgur.com/7VQ0mOp.png'
+            });
 
-        const supportButton = new ActionRowBuilder().addComponents(
-            new ButtonBuilder()
-                .setLabel('🎮 Play Micro Hunter')
-                .setStyle(ButtonStyle.Link)
-                .setURL('https://www.micro-hunter.com/?lang=en'),
-            new ButtonBuilder()
-                .setLabel('🆘 Get Support')
-                .setStyle(ButtonStyle.Secondary)
-                .setCustomId('get_support')
-                .setEmoji('🆘')
-        );
+        const row = new ActionRowBuilder()
+            .addComponents(
+                new ButtonBuilder()
+                    .setCustomId('help_rpg')
+                    .setLabel('RPG Guide')
+                    .setStyle(ButtonStyle.Primary)
+                    .setEmoji('⚔️'),
+                new ButtonBuilder()
+                    .setCustomId('help_shop')
+                    .setLabel('Shop Guide')
+                    .setStyle(ButtonStyle.Secondary)
+                    .setEmoji('🏪'),
+                new ButtonBuilder()
+                    .setCustomId('help_quests')
+                    .setLabel('Quest Guide')
+                    .setStyle(ButtonStyle.Success)
+                    .setEmoji('🏹')
+            );
 
-        await interaction.reply({ 
-            embeds: [helpEmbed], 
-            components: [supportButton] 
-        });
-    }
+        await interaction.reply({ embeds: [embed], components: [row] });
+    },
 };
