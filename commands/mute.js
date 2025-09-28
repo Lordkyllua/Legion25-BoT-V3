@@ -1,42 +1,53 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
+const fs = require('fs');
 
 module.exports = {
-  data: new SlashCommandBuilder()
-    .setName('mute')
-    .setDescription('Mute a user (Moderator only)')
-    .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
-    .addUserOption(option =>
-      option.setName('user')
-        .setDescription('The user to mute')
-        .setRequired(true))
-    .addIntegerOption(option =>
-      option.setName('minutes')
-        .setDescription('Duration in minutes')
-        .setRequired(true))
-    .addStringOption(option =>
-      option.setName('reason')
-        .setDescription('Reason for muting')
-        .setRequired(false)),
-  
-  async execute(interaction) {
-    const target = interaction.options.getUser('user');
-    const minutes = interaction.options.getInteger('minutes');
-    const reason = interaction.options.getString('reason') || 'No reason provided';
-    
-    const member = await interaction.guild.members.fetch(target.id);
-    
-    if (!member.moderatable) {
-      return interaction.reply('❌ I cannot mute this user. They may have higher permissions.');
-    }
-    
-    const duration = minutes * 60 * 1000; // Convert to milliseconds
-    
-    try {
-      await member.timeout(duration, reason);
-      interaction.reply(`🔇 **${target.tag}** has been muted for ${minutes} minutes. Reason: ${reason}`);
-    } catch (error) {
-      console.error(error);
-      interaction.reply('❌ There was an error muting this user.');
-    }
-  }
+    data: new SlashCommandBuilder()
+        .setName('mute')
+        .setDescription('Mute a user (admin only)')
+        .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
+        .addUserOption(option =>
+            option.setName('user')
+                .setDescription('The user to mute')
+                .setRequired(true))
+        .addIntegerOption(option =>
+            option.setName('duration')
+                .setDescription('Duration in minutes')
+                .setRequired(true))
+        .addStringOption(option =>
+            option.setName('reason')
+                .setDescription('Reason for the mute')
+                .setRequired(true)),
+    async execute(interaction) {
+        const targetUser = interaction.options.getUser('user');
+        const duration = interaction.options.getInteger('duration');
+        const reason = interaction.options.getString('reason');
+
+        const member = await interaction.guild.members.fetch(targetUser.id);
+        
+        try {
+            await member.timeout(duration * 60 * 1000, reason);
+            
+            const database = JSON.parse(fs.readFileSync('./database.json', 'utf8'));
+            if (!database.mutedUsers) database.mutedUsers = {};
+            
+            database.mutedUsers[targetUser.id] = {
+                reason: reason,
+                moderator: interaction.user.id,
+                duration: duration,
+                timestamp: new Date().toISOString()
+            };
+            
+            fs.writeFileSync('./database.json', JSON.stringify(database, null, 2));
+
+            await interaction.reply({ 
+                content: `🔇 **User Muted**\n${targetUser} has been muted for ${duration} minutes.\nReason: ${reason}` 
+            });
+        } catch (error) {
+            await interaction.reply({ 
+                content: 'Failed to mute user. Make sure I have the necessary permissions.', 
+                ephemeral: true 
+            });
+        }
+    },
 };
