@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
-const { addGold, getGold } = require('../../utils/gold');
+const { addGold, getGold } = require('../utils/gold');
 
 module.exports = {
     data: new SlashCommandBuilder()
