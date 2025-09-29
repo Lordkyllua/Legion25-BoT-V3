@@ -1,5 +1,4 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
-const fs = require('fs');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -27,18 +26,6 @@ module.exports = {
         
         try {
             await member.timeout(duration * 60 * 1000, reason);
-            
-            const database = JSON.parse(fs.readFileSync('./database.json', 'utf8'));
-            if (!database.mutedUsers) database.mutedUsers = {};
-            
-            database.mutedUsers[targetUser.id] = {
-                reason: reason,
-                moderator: interaction.user.id,
-                duration: duration,
-                timestamp: new Date().toISOString()
-            };
-            
-            fs.writeFileSync('./database.json', JSON.stringify(database, null, 2));
 
             await interaction.reply({ 
                 content: `🔇 **User Muted**\n${targetUser} has been muted for ${duration} minutes.\nReason: ${reason}` 
