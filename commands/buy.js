@@ -82,7 +82,7 @@ module.exports = {
                     { name: '💰 Remaining Gold', value: `🪙 ${newBalance}`, inline: true },
                     { name: '📦 Item Added', value: 'Check your `/inventory`', inline: true }
                 )
-                .setThumbnail('https://i.imgur.com/5R5z8Q2.png')
+                .setThumbnail('https://i.imgur.com/VDnt46I.png')
                 .setFooter({ text: 'Use /inventory to view your new item!' });
 
             await interaction.reply({ embeds: [embed] });
