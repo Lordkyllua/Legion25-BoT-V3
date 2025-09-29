@@ -63,6 +63,22 @@ class Shop {
         return await this.collection().distinct('type');
     }
 
+    static async resetShopItems() {
+        try {
+            // Eliminar todos los items existentes
+            await this.collection().deleteMany({});
+            console.log('🗑️  Old shop items cleared'.yellow);
+            
+            // Inicializar con los nuevos items
+            await this.initializeDefaultItems();
+            
+            return true;
+        } catch (error) {
+            console.error('❌ Error resetting shop items:'.red, error);
+            return false;
+        }
+    }
+
     static async initializeDefaultItems() {
         const defaultItems = [
             // ========== MAGE ITEMS ==========
