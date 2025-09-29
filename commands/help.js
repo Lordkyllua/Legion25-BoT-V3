@@ -21,7 +21,7 @@ module.exports = {
                 },
                 { 
                     name: '🛡️ Administration', 
-                    value: '```/roleadmin - Manage roles\n/warn - Warn users\n/warnings - Check warnings\n/mute - Moderate users\n/givegold - Give gold to users\n/giveexp - Give experience to users\n/resetshop - Reset shop items```' 
+                    value: '```/roleadmin - Manage roles\n/warn - Warn users\n/warnings - Check warnings\n/mute - Moderate users\n/givegold - Give gold to users\n/giveexp - Give experience to users\n/resetshop - Reset shop items\n/resetcharacter - Reset player character```' 
                 }
             )
             .setFooter({ 
