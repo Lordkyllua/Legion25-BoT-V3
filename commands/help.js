@@ -17,11 +17,11 @@ module.exports = {
                 },
                 { 
                     name: '⚔️ RPG System', 
-                    value: '```/rpg - Character management\n/microhunter - Game information\n/quest - Start adventures\n/fight - Battle monsters```' 
+                    value: '```/rpg - Character management\n/microhunter - Game information\n/quest - Start adventures\n/fight - Battle monsters and bosses```' 
                 },
                 { 
                     name: '🛡️ Administration', 
-                    value: '```/roleadmin - Manage roles\n/warn - Warn users\n/warnings - Check warnings\n/mute - Moderate users\n/givegold - Give gold to users\n/giveexp - Give experience to users\n/resetshop - Reset shop items\n/resetcharacter - Reset player character```' 
+                    value: '```/roleadmin - Manage roles\n/warn - Warn users\n/warnings - Check warnings\n/mute - Moderate users\n/givegold - Give gold to users\n/giveexp - Give experience to users\n/resetshop - Reset shop items```' 
                 }
             )
             .setFooter({ 
@@ -45,7 +45,12 @@ module.exports = {
                     .setCustomId('help_quests')
                     .setLabel('Quest Guide')
                     .setStyle(ButtonStyle.Success)
-                    .setEmoji('🏹')
+                    .setEmoji('🏹'),
+                new ButtonBuilder()
+                    .setCustomId('help_combat')
+                    .setLabel('Combat Guide')
+                    .setStyle(ButtonStyle.Danger)
+                    .setEmoji('⚔️')
             );
 
         await interaction.reply({ embeds: [embed], components: [row] });
