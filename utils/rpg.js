@@ -156,9 +156,35 @@ function calculateBattleRewards(monsterLevel) {
     return { exp, gold };
 }
 
+// Nueva función para completar quests
+async function completeQuest(userId, exp, gold) {
+    try {
+        const user = await User.findById(userId);
+        if (!user || !user.rpg) return null;
+
+        // Add experience and gold
+        const levelUp = await addExperience(userId, exp);
+        await Gold.addGold(userId, gold);
+
+        // Update quest statistics
+        user.rpg.questsCompleted = (user.rpg.questsCompleted || 0) + 1;
+        await User.updateRPG(userId, user.rpg);
+
+        return {
+            levelUp: levelUp,
+            questsCompleted: user.rpg.questsCompleted,
+            rewards: { exp, gold }
+        };
+    } catch (error) {
+        console.error('Error completing quest:', error);
+        throw error;
+    }
+}
+
 module.exports = {
     createCharacter,
     addExperience,
     getCharacter,
-    calculateBattleRewards
+    calculateBattleRewards,
+    completeQuest
 };
