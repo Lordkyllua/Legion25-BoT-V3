@@ -1,10 +1,9 @@
-// Now using the new data management system from rpg.js
-// This file is maintained for backward compatibility
+// This file is maintained for compatibility
+// Use gold.js instead for new features
 
-const { getPoints, addPoints, removePoints } = require('./rpg');
+const { getGold, addGold } = require('./gold');
 
 module.exports = {
-    getPoints,
-    addPoints, 
-    removePoints
+    getPoints: getGold,
+    addPoints: addGold
 };
