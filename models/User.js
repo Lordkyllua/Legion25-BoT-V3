@@ -119,6 +119,15 @@ class User {
     static async getUserCount() {
         return await this.collection().countDocuments();
     }
+
+    static async resetCharacter(userId, characterData) {
+        const result = await this.collection().findOneAndUpdate(
+            { userId },
+            { $set: { rpg: characterData } },
+            { returnDocument: 'after' }
+        );
+        return result;
+    }
 }
 
 module.exports = User;
