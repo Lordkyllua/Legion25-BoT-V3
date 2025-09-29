@@ -9,9 +9,10 @@ module.exports = {
         console.log(`🏹 Starting ${difficulty} quest for ${interaction.user.tag}`.green);
         
         const questRewards = {
-            easy: { exp: 50, gold: 25, success: 80 },
-            medium: { exp: 100, gold: 50, success: 60 },
-            hard: { exp: 200, gold: 100, success: 40 }
+            easy: { exp: 50, gold: 25, success: 85 },
+            medium: { exp: 120, gold: 60, success: 65 },
+            hard: { exp: 250, gold: 125, success: 45 },
+            expert: { exp: 500, gold: 250, success: 25 }
         };
 
         const reward = questRewards[difficulty] || questRewards.easy;
@@ -66,7 +67,7 @@ module.exports = {
                 .addFields(
                     { name: '📊 Difficulty', value: difficulty.charAt(0).toUpperCase() + difficulty.slice(1), inline: true },
                     { name: '🎯 Result', value: 'Failed', inline: true },
-                    { name: '💡 Tip', value: 'Try an easier quest or level up your character!', inline: true }
+                    { name: '💡 Tip', value: getFailureTip(difficulty), inline: true }
                 )
                 .setFooter({ text: 'Don\'t give up!' });
 
@@ -79,3 +80,13 @@ module.exports = {
         }
     },
 };
+
+function getFailureTip(difficulty) {
+    const tips = {
+        'easy': 'Try gathering better equipment or leveling up a bit more!',
+        'medium': 'Consider upgrading your gear or trying with a party!',
+        'hard': 'This is a tough challenge! Make sure you\'re fully prepared.',
+        'expert': 'Only the most powerful adventurers can complete these quests!'
+    };
+    return tips[difficulty] || 'Keep training and try again!';
+}
