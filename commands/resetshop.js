@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
-const Shop = require('../../models/Shop');
+const Shop = require('../models/Shop');  // Corregido: '../models/Shop' en lugar de '../../models/Shop'
 
 module.exports = {
     data: new SlashCommandBuilder()
