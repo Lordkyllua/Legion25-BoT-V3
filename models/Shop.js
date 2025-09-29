@@ -97,8 +97,84 @@ class Shop {
                 level: 1,
                 stats: { magic: 6, intelligence: 2 },
                 rarity: "common"
+            },
+            {
+                id: 4,
+                name: "🛡️ Iron Armor",
+                description: "Basic protection for warriors",
+                price: 150,
+                type: "armor",
+                class: "warrior",
+                level: 5,
+                stats: { defense: 8, hp: 20 },
+                rarity: "common"
+            },
+            {
+                id: 5,
+                name: "🧥 Leather Armor",
+                description: "Light armor for agile archers",
+                price: 120,
+                type: "armor",
+                class: "archer",
+                level: 5,
+                stats: { defense: 5, agility: 5 },
+                rarity: "common"
+            },
+            {
+                id: 6,
+                name: "👘 Mage Robe",
+                description: "Enchanted robe for spellcasters",
+                price: 130,
+                type: "armor",
+                class: "mage",
+                level: 5,
+                stats: { defense: 3, magic: 8 },
+                rarity: "common"
+            },
+            {
+                id: 7,
+                name: "❤️ Health Potion",
+                description: "Restores 50 HP in battle",
+                price: 50,
+                type: "potion",
+                class: "all",
+                level: 1,
+                stats: { hp: 50 },
+                rarity: "common"
+            },
+            {
+                id: 8,
+                name: "💙 Mana Potion",
+                description: "Restores 30 MP for spells",
+                price: 60,
+                type: "potion",
+                class: "all",
+                level: 1,
+                stats: { mp: 30 },
+                rarity: "common"
+            },
+            {
+                id: 9,
+                name: "⚔️ Dragon Slayer",
+                description: "Legendary sword for master warriors",
+                price: 500,
+                type: "weapon",
+                class: "warrior",
+                level: 20,
+                stats: { attack: 25, defense: 5 },
+                rarity: "epic"
+            },
+            {
+                id: 10,
+                name: "🎯 Elven Bow",
+                description: "Mystical bow with perfect accuracy",
+                price: 450,
+                type: "weapon",
+                class: "archer",
+                level: 20,
+                stats: { attack: 20, agility: 15 },
+                rarity: "epic"
             }
-            // Add more default items as needed
         ];
 
         const existingItems = await this.collection().countDocuments();
