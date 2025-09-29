@@ -17,15 +17,33 @@ client.commands = new Collection();
 client.buttons = new Collection();
 client.selectMenus = new Collection();
 
-// Load commands
-const commandsPath = path.join(__dirname, 'commands');
-const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
-
-for (const file of commandFiles) {
-    const filePath = path.join(commandsPath, file);
-    const command = require(filePath);
-    client.commands.set(command.data.name, command);
+// Load commands recursively from all subfolders
+function loadCommands(dir) {
+    const items = fs.readdirSync(dir);
+    
+    for (const item of items) {
+        const itemPath = path.join(dir, item);
+        const stat = fs.statSync(itemPath);
+        
+        if (stat.isDirectory()) {
+            // Recursively load commands from subdirectories
+            loadCommands(itemPath);
+        } else if (item.endsWith('.js')) {
+            try {
+                const command = require(itemPath);
+                if (command.data && command.execute) {
+                    client.commands.set(command.data.name, command);
+                    console.log(`✅ Loaded command: ${command.data.name}`.green);
+                }
+            } catch (error) {
+                console.error(`❌ Error loading command ${itemPath}:`.red, error.message);
+            }
+        }
+    }
 }
+
+// Load all commands
+loadCommands(path.join(__dirname, 'commands'));
 
 // Load events
 const eventsPath = path.join(__dirname, 'events');
@@ -70,7 +88,7 @@ function loadComponents(dir) {
                         }
                     } else if (dir.includes('selectMenus')) {
                         client.selectMenus.set(component.customId, component);
-                        console.log(`✅ Loaded select menu: ${component.customId}`.blue);
+                        console.log(`✅ Loaded select menu: ${component.customId}`.cyan);
                     }
                 }
             } catch (error) {
