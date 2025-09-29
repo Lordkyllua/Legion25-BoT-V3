@@ -90,6 +90,24 @@ class User {
         return result;
     }
 
+    static async incrementQuestsCompleted(userId) {
+        const result = await this.collection().findOneAndUpdate(
+            { userId },
+            { $inc: { 'rpg.questsCompleted': 1 } },
+            { returnDocument: 'after' }
+        );
+        return result;
+    }
+
+    static async incrementMonstersDefeated(userId, amount = 1) {
+        const result = await this.collection().findOneAndUpdate(
+            { userId },
+            { $inc: { 'rpg.monstersDefeated': amount } },
+            { returnDocument: 'after' }
+        );
+        return result;
+    }
+
     static async getTopPlayers(limit = 10) {
         return await this.collection()
             .find({ 'rpg.level': { $gt: 0 } })
