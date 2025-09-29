@@ -9,7 +9,7 @@ module.exports = {
             .setTitle('🎮 Legion25 Bot - Command Center')
             .setDescription(`**Welcome to Legion25 RPG Bot!**\n\n*"Where every command begins a new adventure..."*\n\nBrowse through the categories below to learn about all available features.`)
             .setColor(0x00AE86)
-            .setThumbnail('https://kg-web-cdn.akamaized.net/master/official-website/l-official-frontend/public/images/logo-icon_m.jpg')
+            .setThumbnail('https://i.imgur.com/txB085t.jpeg')
             .addFields(
                 { 
                     name: '🛠️ General Commands', 
@@ -21,7 +21,7 @@ module.exports = {
                 },
                 { 
                     name: '🛡️ Administration', 
-                    value: '```/roleadmin - Manage roles\n/warn - Warn users\n/warnings - Check warnings\n/mute - Moderate users\n/givegold - Give gold to users\n/giveexp - Give experience to users```' 
+                    value: '```/roleadmin - Manage roles\n/warn - Warn users\n/warnings - Check warnings\n/mute - Moderate users\n/givegold - Give gold to users\n/giveexp - Give experience to users\n/resetshop - Reset shop items```' 
                 }
             )
             .setFooter({ 
