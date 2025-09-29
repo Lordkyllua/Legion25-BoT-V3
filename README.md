@@ -1,4 +1,4 @@
-# 🎮 Legion25 Bot v2.0
+# 🎮 Legion25 Bot v3.0
 
 > *"Where adventure meets discord - A Micro Hunter inspired RPG experience"*
 
@@ -12,6 +12,7 @@
 - **🎯 Interactive Menus**: Beautiful and intuitive interfaces
 - **⚔️ Quest System**: Complete adventures for rewards
 - **🛡️ Role Management**: Easy role selection system
+- **💾 MongoDB Database**: Persistent data storage
 
 ## 🎲 Commands
 
@@ -24,7 +25,7 @@ This bot was created with passion by **LordK**, inspired by the amazing game **M
 ## 🚀 Setup
 
 1. Invite the bot to your server
-2. Set `DISCORD_TOKEN` in Railway
+2. Set `DISCORD_TOKEN` and `MONGODB_URI` in Railway
 3. Use `/roleadmin` to configure selectable roles
 4. Start your adventure with `/rpg`
 
