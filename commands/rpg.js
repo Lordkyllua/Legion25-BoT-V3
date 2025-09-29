@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const fs = require('fs');
+const User = require('../models/User');
 const { getGold } = require('../utils/gold');
 
 module.exports = {
@@ -7,10 +7,10 @@ module.exports = {
         .setName('rpg')
         .setDescription('Manage your RPG character and check stats'),
     async execute(interaction) {
-        const database = JSON.parse(fs.readFileSync('./database.json', 'utf8'));
         const userId = interaction.user.id;
+        const user = await User.findById(userId);
 
-        if (!database.users[userId]) {
+        if (!user || !user.rpg || !user.rpg.class) {
             // New user - show class selection
             const selectMenu = new StringSelectMenuBuilder()
                 .setCustomId('rpg_class_selection')
@@ -65,29 +65,29 @@ module.exports = {
             await interaction.reply({ embeds: [embed], components: [row] });
         } else {
             // Existing user - show character info
-            const user = database.users[userId];
-            const userGold = getGold(userId);
+            const rpg = user.rpg;
+            const userGold = await getGold(userId);
             
             const embed = new EmbedBuilder()
                 .setTitle(`🧙‍♂️ ${interaction.user.username}'s Character`)
-                .setColor(getClassColor(user.class))
+                .setColor(getClassColor(rpg.class))
                 .setThumbnail(interaction.user.displayAvatarURL())
-                .setDescription(`**${user.evolution} ${user.class.charAt(0).toUpperCase() + user.class.slice(1)}**`)
+                .setDescription(`**${rpg.evolution} ${rpg.class.charAt(0).toUpperCase() + rpg.class.slice(1)}**`)
                 .addFields(
-                    { name: '⭐ Level', value: `**${user.level}**`, inline: true },
-                    { name: '📊 Experience', value: `${user.exp}/${user.maxExp}`, inline: true },
+                    { name: '⭐ Level', value: `**${rpg.level}**`, inline: true },
+                    { name: '📊 Experience', value: `${rpg.exp}/${rpg.maxExp}`, inline: true },
                     { name: '💰 Gold', value: `🪙 ${userGold}`, inline: true },
-                    { name: '❤️ HP', value: `${user.hp}/${user.maxHp}`, inline: true },
-                    { name: '💙 MP', value: `${user.mp}/${user.maxMp}`, inline: true },
-                    { name: '⚔️ Attack', value: user.attack.toString(), inline: true },
-                    { name: '🛡️ Defense', value: user.defense.toString(), inline: true },
-                    { name: '🔮 Magic', value: user.magic.toString(), inline: true },
-                    { name: '🎯 Agility', value: user.agility.toString(), inline: true }
+                    { name: '❤️ HP', value: `${rpg.hp}/${rpg.maxHp}`, inline: true },
+                    { name: '💙 MP', value: `${rpg.mp}/${rpg.maxMp}`, inline: true },
+                    { name: '⚔️ Attack', value: rpg.attack.toString(), inline: true },
+                    { name: '🛡️ Defense', value: rpg.defense.toString(), inline: true },
+                    { name: '🔮 Magic', value: rpg.magic.toString(), inline: true },
+                    { name: '🎯 Agility', value: rpg.agility.toString(), inline: true }
                 )
                 .setFooter({ text: `Adventuring since ${new Date(user.createdAt).toLocaleDateString()}` });
 
             // Add evolution info if close to next evolution
-            const nextEvolution = getNextEvolution(user);
+            const nextEvolution = getNextEvolution(rpg);
             if (nextEvolution) {
                 embed.addFields({
                     name: '✨ Next Evolution',
@@ -129,17 +129,17 @@ function getClassColor(className) {
     return colors[className] || 0x95A5A6;
 }
 
-function getNextEvolution(user) {
+function getNextEvolution(rpg) {
     const evolutionLevels = {
         mage: [20, 50, 80],
         warrior: [20, 50, 80],
         archer: [20, 50, 80]
     };
     
-    const levels = evolutionLevels[user.class];
+    const levels = evolutionLevels[rpg.class];
     for (const level of levels) {
-        if (user.level < level) {
-            return { level: level, name: getEvolutionName(user.class, level) };
+        if (rpg.level < level) {
+            return { level: level, name: getEvolutionName(rpg.class, level) };
         }
     }
     return null;
