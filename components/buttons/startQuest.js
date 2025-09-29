@@ -1,6 +1,5 @@
 const { EmbedBuilder } = require('discord.js');
-const { addExperience } = require('../../utils/rpg');
-const { addGold } = require('../../utils/gold');
+const { completeQuest } = require('../../utils/rpg');
 
 module.exports = {
     customId: 'start_quest_', // El _ al final indica que es un prefijo dinámico
@@ -23,8 +22,7 @@ module.exports = {
         if (success) {
             // Quest successful
             try {
-                await addExperience(interaction.user.id, reward.exp);
-                await addGold(interaction.user.id, reward.gold);
+                const result = await completeQuest(interaction.user.id, reward.exp, reward.gold);
                 
                 const embed = new EmbedBuilder()
                     .setTitle('🎉 Quest Completed!')
@@ -33,9 +31,18 @@ module.exports = {
                     .addFields(
                         { name: '🏆 Rewards', value: `⭐ ${reward.exp} EXP\n🪙 ${reward.gold} Gold`, inline: true },
                         { name: '📊 Difficulty', value: difficulty.charAt(0).toUpperCase() + difficulty.slice(1), inline: true },
-                        { name: '🎯 Result', value: 'Success!', inline: true }
+                        { name: '📈 Total Quests', value: `${result.questsCompleted} completed`, inline: true }
                     )
                     .setFooter({ text: 'Great job adventurer!' });
+
+                // Add level up message if applicable
+                if (result.levelUp && result.levelUp.levelsGained > 0) {
+                    embed.addFields({
+                        name: '🎊 Level Up!',
+                        value: `You reached level ${result.levelUp.user.level}!`,
+                        inline: false
+                    });
+                }
 
                 await interaction.update({ 
                     embeds: [embed], 
