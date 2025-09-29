@@ -42,6 +42,7 @@ module.exports = {
             )
             .setFooter({ text: 'Click "Start Quest" to begin your adventure!' });
 
+        // Usar customId dinámico con la dificultad
         const startButton = new ButtonBuilder()
             .setCustomId(`start_quest_${randomQuest.difficulty.toLowerCase()}`)
             .setLabel('Start Quest')
