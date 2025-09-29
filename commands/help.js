@@ -9,7 +9,7 @@ module.exports = {
             .setTitle('🎮 Legion25 Bot - Command Center')
             .setDescription(`**Welcome to Legion25 RPG Bot!**\n\n*"Where every command begins a new adventure..."*\n\nBrowse through the categories below to learn about all available features.`)
             .setColor(0x00AE86)
-            .setThumbnail('https://i.imgur.com/xRk7Qq3.png')
+            .setThumbnail('https://kg-web-cdn.akamaized.net/master/official-website/l-official-frontend/public/images/logo-icon_m.jpg')
             .addFields(
                 { 
                     name: '🛠️ General Commands', 
@@ -26,7 +26,7 @@ module.exports = {
             )
             .setFooter({ 
                 text: 'Developed with ❤️ by LordK • Inspired by Micro Hunter',
-                iconURL: 'https://i.imgur.com/7VQ0mOp.png'
+                iconURL: 'https://i.imgur.com/xaONJxl.jpeg'
             });
 
         const row = new ActionRowBuilder()
