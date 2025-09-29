@@ -32,7 +32,7 @@ async function showGoldRanking(interaction) {
         .setTitle('🏆 Gold Ranking Leaderboard')
         .setColor(0xFFD700)
         .setDescription('Top 10 wealthiest adventurers:')
-        .setThumbnail('https://i.imgur.com/7VQ0mOp.png')
+        .setThumbnail('https://i.imgur.com/VjziJqU.png')
         .setFooter({ text: 'Earn gold through quests, battles, and games!' });
 
     for (let i = 0; i < topRich.length; i++) {
