@@ -12,7 +12,7 @@ module.exports = {
             .addFields(
                 { name: 'Official Website', value: '[Visit Micro Hunter](https://www.micro-hunter.com/?lang=en)' },
                 { name: 'Game Features', value: '• Browser-based RPG\n• Character progression\n• Item collection\n• Strategic battles' },
-                { name: 'Bot Inspiration', value: 'This bot brings Micro Hunter\\'s core mechanics to Discord with RPG elements, item shops, and character progression.' }
+                { name: 'Bot Inspiration', value: 'This bot brings Micro Hunter\'s core mechanics to Discord with RPG elements, item shops, and character progression.' }
             )
             .setFooter({ text: 'Developed by LordK and inspired by Micro Hunter' });
 
