@@ -3,9 +3,11 @@ const { addExperience } = require('../../utils/rpg');
 const { addGold } = require('../../utils/gold');
 
 module.exports = {
-    customId: 'start_quest_',
+    customId: 'start_quest_', // El _ al final indica que es un prefijo dinámico
     async execute(interaction) {
         const difficulty = interaction.customId.replace('start_quest_', '');
+        
+        console.log(`🏹 Starting ${difficulty} quest for ${interaction.user.tag}`.green);
         
         const questRewards = {
             easy: { exp: 50, gold: 25, success: 80 },
@@ -20,23 +22,34 @@ module.exports = {
         
         if (success) {
             // Quest successful
-            await addExperience(interaction.user.id, reward.exp);
-            await addGold(interaction.user.id, reward.gold);
-            
-            const embed = new EmbedBuilder()
-                .setTitle('🎉 Quest Completed!')
-                .setColor(0x00FF00)
-                .setDescription('You successfully completed your quest!')
-                .addFields(
-                    { name: '🏆 Rewards', value: `⭐ ${reward.exp} EXP\n🪙 ${reward.gold} Gold`, inline: true },
-                    { name: '📊 Difficulty', value: difficulty.charAt(0).toUpperCase() + difficulty.slice(1), inline: true }
-                )
-                .setFooter({ text: 'Great job adventurer!' });
+            try {
+                await addExperience(interaction.user.id, reward.exp);
+                await addGold(interaction.user.id, reward.gold);
+                
+                const embed = new EmbedBuilder()
+                    .setTitle('🎉 Quest Completed!')
+                    .setColor(0x00FF00)
+                    .setDescription('You successfully completed your quest!')
+                    .addFields(
+                        { name: '🏆 Rewards', value: `⭐ ${reward.exp} EXP\n🪙 ${reward.gold} Gold`, inline: true },
+                        { name: '📊 Difficulty', value: difficulty.charAt(0).toUpperCase() + difficulty.slice(1), inline: true },
+                        { name: '🎯 Result', value: 'Success!', inline: true }
+                    )
+                    .setFooter({ text: 'Great job adventurer!' });
 
-            await interaction.update({ 
-                embeds: [embed], 
-                components: [] 
-            });
+                await interaction.update({ 
+                    embeds: [embed], 
+                    components: [] 
+                });
+                
+                console.log(`✅ Quest successful for ${interaction.user.tag}`.green);
+            } catch (error) {
+                console.error('Error rewarding quest:', error);
+                await interaction.update({ 
+                    content: 'There was an error processing your quest rewards.', 
+                    components: [] 
+                });
+            }
         } else {
             // Quest failed
             const embed = new EmbedBuilder()
@@ -45,6 +58,7 @@ module.exports = {
                 .setDescription('Your quest was not successful. Better luck next time!')
                 .addFields(
                     { name: '📊 Difficulty', value: difficulty.charAt(0).toUpperCase() + difficulty.slice(1), inline: true },
+                    { name: '🎯 Result', value: 'Failed', inline: true },
                     { name: '💡 Tip', value: 'Try an easier quest or level up your character!', inline: true }
                 )
                 .setFooter({ text: 'Don\'t give up!' });
@@ -53,6 +67,8 @@ module.exports = {
                 embeds: [embed], 
                 components: [] 
             });
+            
+            console.log(`❌ Quest failed for ${interaction.user.tag}`.red);
         }
     },
 };
