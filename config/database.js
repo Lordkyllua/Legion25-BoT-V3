@@ -13,7 +13,9 @@ class Database {
             const mongoUri = process.env.MONGODB_URI;
             
             if (!mongoUri) {
-                throw new Error('MONGODB_URI environment variable is not set');
+                console.log('⚠️  MONGODB_URI not set. Running in local mode.'.yellow);
+                this.isConnected = false;
+                return null;
             }
 
             console.log('🔄 Connecting to MongoDB...'.yellow);
@@ -36,11 +38,15 @@ class Database {
             return this.db;
         } catch (error) {
             console.error('❌ MongoDB connection failed:'.red, error.message);
-            throw error;
+            console.log('⚠️  Running in local mode without database'.yellow);
+            this.isConnected = false;
+            return null;
         }
     }
 
     async createIndexes() {
+        if (!this.isConnected) return;
+        
         try {
             // Users collection indexes
             await this.db.collection('users').createIndex({ userId: 1 }, { unique: true });
@@ -62,7 +68,7 @@ class Database {
     }
 
     async disconnect() {
-        if (this.client) {
+        if (this.client && this.isConnected) {
             await this.client.close();
             this.isConnected = false;
             console.log('🔌 MongoDB disconnected'.yellow);
