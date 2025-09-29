@@ -1,6 +1,6 @@
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
-const { addExperience } = require('../../utils/rpg');
-const User = require('../../models/User');
+const { addExperience } = require('../utils/rpg');
+const User = require('../models/User');
 
 module.exports = {
     data: new SlashCommandBuilder()
