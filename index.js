@@ -55,13 +55,26 @@ function loadComponents(dir) {
         if (stat.isDirectory()) {
             loadComponents(itemPath);
         } else if (item.endsWith('.js')) {
-            const component = require(itemPath);
-            if (component.customId) {
-                if (dir.includes('buttons')) {
-                    client.buttons.set(component.customId, component);
-                } else if (dir.includes('selectMenus')) {
-                    client.selectMenus.set(component.customId, component);
+            try {
+                const component = require(itemPath);
+                if (component.customId) {
+                    if (dir.includes('buttons')) {
+                        // Para botones con customId que empiezan con un prefijo
+                        if (component.customId.endsWith('_')) {
+                            // Es un botón con prefijo dinámico
+                            client.buttons.set(component.customId, component);
+                            console.log(`✅ Loaded dynamic button: ${component.customId}`.blue);
+                        } else {
+                            client.buttons.set(component.customId, component);
+                            console.log(`✅ Loaded button: ${component.customId}`.blue);
+                        }
+                    } else if (dir.includes('selectMenus')) {
+                        client.selectMenus.set(component.customId, component);
+                        console.log(`✅ Loaded select menu: ${component.customId}`.blue);
+                    }
                 }
+            } catch (error) {
+                console.error(`❌ Error loading component ${itemPath}:`.red, error.message);
             }
         }
     }
@@ -97,10 +110,21 @@ client.once('ready', async () => {
         
         // Connect to MongoDB
         await database.connect();
-        console.log('✅ Database connection established'.green);
+        
+        if (database.isConnected) {
+            console.log('✅ Database connection established'.green);
+            
+            // Initialize default shop items only if DB is connected
+            const Shop = require('./models/Shop');
+            await Shop.initializeDefaultItems();
+        } else {
+            console.log('⚠️  Running without database connection'.yellow);
+        }
 
         console.log(`🤖 Logged in as ${client.user.tag}!`.green);
         console.log(`🎮 Loaded ${client.commands.size} commands`.blue);
+        console.log(`🔘 Loaded ${client.buttons.size} buttons`.magenta);
+        console.log(`📋 Loaded ${client.selectMenus.size} select menus`.cyan);
         console.log(`👥 Serving ${client.guilds.cache.size} servers`.magenta);
 
         // Register commands
@@ -110,10 +134,6 @@ client.once('ready', async () => {
             { body: commands },
         );
         console.log('✅ Successfully reloaded application commands!'.green);
-
-        // Initialize default shop items
-        const Shop = require('./models/Shop');
-        await Shop.initializeDefaultItems();
 
         // Rotate status every minute
         let statusIndex = 0;
@@ -125,7 +145,7 @@ client.once('ready', async () => {
 
     } catch (error) {
         console.error('❌ Error during startup:'.red, error);
-        process.exit(1);
+        // No process.exit(1) para que el bot siga funcionando
     }
 });
 
