@@ -42,7 +42,7 @@ module.exports = {
                 .setTitle('🎮 Choose Your Hero Class')
                 .setDescription('**Welcome to the world of Legion25 RPG!**\n\nSelect your class to begin your epic adventure. Each class has unique strengths and abilities that will shape your journey.')
                 .setColor(0x9B59B6)
-                .setThumbnail('https://i.imgur.com/xRk7Qq3.png')
+                .setThumbnail('https://i.imgur.com/txB085t.jpeg')
                 .addFields(
                     { 
                         name: '🔮 Mage', 
