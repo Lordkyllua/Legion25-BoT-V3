@@ -31,6 +31,11 @@ module.exports = {
                     name: '⭐ Adventure Level', 
                     value: `Level ${rpg.level}\nEXP: ${rpg.exp}/${rpg.maxExp}`,
                     inline: true 
+                },
+                { 
+                    name: '🎯 Class & Evolution', 
+                    value: `${rpg.evolution} ${rpg.class.charAt(0).toUpperCase() + rpg.class.slice(1)}`,
+                    inline: true 
                 }
             )
             .setFooter({ text: 'Use /quest to start a new adventure!' });
@@ -87,8 +92,11 @@ function getAchievements(rpg) {
     if (rpg.level >= 10) achievements.push('🎖️ Level 10 Adventurer');
     if (rpg.level >= 25) achievements.push('🏅 Level 25 Hero');
     if (rpg.level >= 50) achievements.push('👑 Level 50 Champion');
-    if (rpg.questsCompleted >= 10) achievements.push('📚 Quest Master');
-    if (rpg.monstersDefeated >= 50) achievements.push('⚔️ Monster Slayer');
+    if ((rpg.questsCompleted || 0) >= 10) achievements.push('📚 Quest Master');
+    if ((rpg.monstersDefeated || 0) >= 50) achievements.push('⚔️ Monster Slayer');
+    if (rpg.evolution !== 'Apprentice' && rpg.evolution !== 'Squire' && rpg.evolution !== 'Hunter') {
+        achievements.push('✨ Evolution Master');
+    }
     
     return achievements.length > 0 ? achievements : ['🌟 No achievements yet. Keep adventuring!'];
 }
