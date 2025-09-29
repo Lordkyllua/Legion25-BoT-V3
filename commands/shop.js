@@ -31,7 +31,7 @@ module.exports = {
             .setTitle('🏪 Magical Item Shop')
             .setDescription('Welcome to the shop! Browse our categories to find amazing items for your adventure.')
             .setColor(0x00AE86)
-            .setThumbnail('https://i.imgur.com/3JQ4p7p.png')
+            .setThumbnail('https://i.imgur.com/VDnt46I.png')
             .addFields(
                 { name: '💰 Your Gold', value: `🪙 ${userGold}`, inline: true },
                 { name: '🎯 Your Class', value: userClass ? `${userClass.charAt(0).toUpperCase() + userClass.slice(1)}` : 'Not chosen', inline: true },
