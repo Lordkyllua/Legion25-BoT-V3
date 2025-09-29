@@ -1,60 +1,45 @@
 const { EmbedBuilder } = require('discord.js');
 
 module.exports = {
-  name: 'helpNavigation',
-  async execute(interaction, client) {
-    const page = interaction.customId.split('_')[1];
-    const commands = Array.from(client.commands.values());
-    const pages = Math.ceil(commands.length / 5);
-    
-    const startIndex = (parseInt(page) - 1) * 5;
-    const endIndex = startIndex + 5;
-    const pageCommands = commands.slice(startIndex, endIndex);
-    
-    const embed = new EmbedBuilder()
-      .setTitle(`📚 Bot Commands - Page ${page}/${pages}`)
-      .setColor(0x0099ff)
-      .setDescription('Here are all available commands:')
-      .addFields(
-        pageCommands.map(cmd => ({
-          name: `/${cmd.name}`,
-          value: cmd.description || 'No description provided'
-        }))
-      )
-      .setTimestamp()
-      .setFooter({ 
-        text: 'Bot developed by LordK • Inspired by Tiny Survivors', 
-        iconURL: client.user.displayAvatarURL() 
-      });
-    
-    const buttons = {
-      type: 1,
-      components: []
-    };
-    
-    // Botón Anterior
-    if (page > 1) {
-      buttons.components.push({
-        type: 2,
-        label: '⬅️ Previous',
-        style: 1,
-        customId: `helpNavigation_${parseInt(page) - 1}`
-      });
-    }
-    
-    // Botón Siguiente
-    if (page < pages) {
-      buttons.components.push({
-        type: 2,
-        label: 'Next ➡️',
-        style: 1,
-        customId: `helpNavigation_${parseInt(page) + 1}`
-      });
-    }
-    
-    await interaction.update({ 
-      embeds: [embed], 
-      components: [buttons] 
-    });
-  }
+    customId: 'help_',
+    async execute(interaction) {
+        if (interaction.customId === 'help_rpg') {
+            const embed = new EmbedBuilder()
+                .setTitle('⚔️ RPG System Guide')
+                .setColor(0xE74C3C)
+                .addFields(
+                    { name: 'Classes', value: '• **Mage**: Powerful magic, low defense\n• **Warrior**: High HP and defense\n• **Archer**: Balanced stats with ranged attacks' },
+                    { name: 'Leveling', value: 'Gain experience through quests and battles. Max level is 100.' },
+                    { name: 'Items', value: 'Equip weapons, armor, and accessories to boost your stats.' },
+                    { name: 'Commands', value: '`/rpg` - Character info\n`/quest` - Start quests\n`/fight` - Battle players' }
+                );
+
+            await interaction.update({ embeds: [embed] });
+        } else if (interaction.customId === 'help_shop') {
+            const embed = new EmbedBuilder()
+                .setTitle('🛒 Shop System Guide')
+                .setColor(0x3498DB)
+                .addFields(
+                    { name: 'Currency', value: 'Earn gold through games, quests, and activities' },
+                    { name: 'Items', value: 'Weapons, armor, and consumables available' },
+                    { name: 'Class Items', value: 'Some items are class-specific' },
+                    { name: 'Level Requirements', value: 'Higher level items require higher character level' },
+                    { name: 'Commands', value: '`/shop` - Browse items\n`/buy` - Purchase items\n`/inventory` - View your items' }
+                );
+
+            await interaction.update({ embeds: [embed] });
+        } else if (interaction.customId === 'help_quests') {
+            const embed = new EmbedBuilder()
+                .setTitle('🏹 Quest System Guide')
+                .setColor(0xF39C12)
+                .addFields(
+                    { name: 'Quest Types', value: '• Easy: Low risk, low reward\n• Medium: Balanced challenge\n• Hard: High risk, high reward' },
+                    { name: 'Rewards', value: 'Earn experience points and gold' },
+                    { name: 'Success Chance', value: 'Higher level characters have better success rates' },
+                    { name: 'Commands', value: '`/quest` - Start a quest\n`/rpg` - Check your level' }
+                );
+
+            await interaction.update({ embeds: [embed] });
+        }
+    },
 };
