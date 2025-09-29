@@ -28,7 +28,7 @@ module.exports = {
         }
 
         const embed = new EmbedBuilder()
-            .setTitle('🏪 Magical Item Shop')
+            .setTitle('🏪 Legion25 Item Shop')
             .setDescription('Welcome to the shop! Browse our categories to find amazing items for your adventure.')
             .setColor(0x00AE86)
             .setThumbnail('https://i.imgur.com/VDnt46I.png')
