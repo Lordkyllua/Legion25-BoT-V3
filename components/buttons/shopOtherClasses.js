@@ -5,18 +5,39 @@ module.exports = {
     customId: 'shop_other_classes',
     async execute(interaction) {
         try {
-            // Obtener la categoría del mensaje original de manera más robusta
+            // Obtener la categoría del mensaje original - método mejorado
             const originalEmbed = interaction.message.embeds[0];
-            let category = 'weapon'; // Valor por defecto
+            let category = null;
             
-            // Extraer la categoría del título del embed
-            if (originalEmbed && originalEmbed.title) {
+            // Buscar la categoría en los fields del embed original
+            if (originalEmbed && originalEmbed.fields) {
+                for (const field of originalEmbed.fields) {
+                    if (field.name && field.name.toLowerCase().includes('items')) {
+                        // Extraer categoría del nombre del field
+                        const fieldName = field.name.toLowerCase();
+                        if (fieldName.includes('weapon')) category = 'weapon';
+                        else if (fieldName.includes('armor')) category = 'armor';
+                        else if (fieldName.includes('accessory')) category = 'accessory';
+                        else if (fieldName.includes('potion')) category = 'potion';
+                        else if (fieldName.includes('consumable')) category = 'consumable';
+                        break;
+                    }
+                }
+            }
+            
+            // Si no se encontró en los fields, intentar del título
+            if (!category && originalEmbed && originalEmbed.title) {
                 const title = originalEmbed.title.toLowerCase();
                 if (title.includes('weapon')) category = 'weapon';
                 else if (title.includes('armor')) category = 'armor';
                 else if (title.includes('accessory')) category = 'accessory';
                 else if (title.includes('potion')) category = 'potion';
                 else if (title.includes('consumable')) category = 'consumable';
+            }
+
+            // Si aún no se encuentra, usar valor por defecto
+            if (!category) {
+                category = 'weapon';
             }
 
             console.log(`Loading ${category} items for all classes...`);
@@ -36,30 +57,42 @@ module.exports = {
                 .setDescription(`Showing all ${category} items for all classes:`)
                 .setFooter({ text: 'Use /buy <item_id> to purchase an item' });
 
-            // Mostrar items agrupados por clase
-            const classes = {
-                mage: categoryItems.filter(item => item.class === 'mage'),
-                warrior: categoryItems.filter(item => item.class === 'warrior'),
-                archer: categoryItems.filter(item => item.class === 'archer'),
-                all: categoryItems.filter(item => item.class === 'all')
+            // Agrupar items por clase
+            const classGroups = {
+                mage: { items: [], emoji: '🔮' },
+                warrior: { items: [], emoji: '⚔️' },
+                archer: { items: [], emoji: '🏹' },
+                all: { items: [], emoji: '👥' }
             };
+
+            // Organizar items por clase
+            categoryItems.forEach(item => {
+                if (classGroups[item.class]) {
+                    classGroups[item.class].items.push(item);
+                }
+            });
 
             let hasItems = false;
 
-            for (const [classType, items] of Object.entries(classes)) {
-                if (items.length > 0) {
+            // Mostrar items por clase
+            for (const [classType, group] of Object.entries(classGroups)) {
+                if (group.items.length > 0) {
                     hasItems = true;
                     const classDisplay = classType === 'all' ? 'All Classes' : 
                                         classType.charAt(0).toUpperCase() + classType.slice(1);
                     
-                    const itemList = items.slice(0, 4).map(item => 
-                        `${getRarityEmoji(item.rarity)} **${item.name}** (ID: ${item.id})\n🪙 ${item.price} | Level: ${item.level}`
+                    // Ordenar items por nivel y precio
+                    const sortedItems = group.items.sort((a, b) => a.level - b.level || a.price - b.price);
+                    const displayItems = sortedItems.slice(0, 4);
+                    
+                    const itemList = displayItems.map(item => 
+                        `${getRarityEmoji(item.rarity)} **${item.name}** (ID: ${item.id})\n🪙 ${item.price} | Level ${item.level}`
                     ).join('\n\n');
                     
-                    const moreText = items.length > 4 ? `\n\n*...and ${items.length - 4} more*` : '';
+                    const moreText = group.items.length > 4 ? `\n\n*...and ${group.items.length - 4} more*` : '';
                     
                     embed.addFields({
-                        name: `${getClassEmoji(classType)} ${classDisplay} (${items.length})`,
+                        name: `${group.emoji} ${classDisplay} (${group.items.length})`,
                         value: itemList + moreText,
                         inline: false
                     });
@@ -98,16 +131,6 @@ module.exports = {
         }
     },
 };
-
-function getClassEmoji(className) {
-    const emojis = {
-        mage: '🔮',
-        warrior: '⚔️',
-        archer: '🏹',
-        all: '👥'
-    };
-    return emojis[className] || '📦';
-}
 
 function getRarityEmoji(rarity) {
     const emojis = {
