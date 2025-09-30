@@ -71,17 +71,30 @@ module.exports = {
 
         const row = new ActionRowBuilder().addComponents(attackButton, specialButton, fleeButton);
 
-        // Guardar datos de la batalla temporalmente
+        // Guardar datos de la batalla - CORREGIDO
         const battleData = {
-            player: { ...player, currentHp: player.hp },
-            enemy: enemy,
-            type: battleType,
-            turn: 'player'
+            player: { 
+                ...player, 
+                currentHp: player.hp,
+                currentMp: player.mp || player.maxMp || 30 // Asegurar que MP existe
+            },
+            enemy: { 
+                ...enemy, 
+                currentHp: enemy.hp // Asegurar que currentHp existe
+            },
+            type: battleType
         };
 
-        // Guardar en la base de datos o en memoria (simplificado)
-        interaction.client.battleData = interaction.client.battleData || {};
+        // Inicializar battleData si no existe
+        if (!interaction.client.battleData) {
+            interaction.client.battleData = {};
+        }
+        
+        // Guardar con una clave única por usuario
         interaction.client.battleData[userId] = battleData;
+
+        console.log(`Battle started for ${userId}: ${battleType}`);
+        console.log('Battle data saved:', battleData);
 
         await interaction.reply({ 
             embeds: [battleEmbed], 
@@ -103,6 +116,7 @@ function generateRandomMonster(playerLevel) {
     ];
 
     const monster = monsters[Math.floor(Math.random() * monsters.length)];
+    // Asegurar que todos los enemigos tengan currentHp
     monster.currentHp = monster.hp;
     return monster;
 }
@@ -199,7 +213,17 @@ function getAvailableBosses(playerLevel) {
         }
     ];
 
-    return allBosses.filter(boss => boss.level <= playerLevel + 10 && boss.level >= playerLevel - 5);
+    const available = allBosses.filter(boss => boss.level <= playerLevel + 10 && boss.level >= playerLevel - 5);
+    
+    // Si no hay bosses disponibles, usar el más cercano
+    if (available.length === 0) {
+        const closestBoss = allBosses.reduce((prev, curr) => {
+            return (Math.abs(curr.level - playerLevel) < Math.abs(prev.level - playerLevel) ? curr : prev);
+        });
+        return [closestBoss];
+    }
+    
+    return available;
 }
 
 function generateArenaOpponent(playerLevel) {
@@ -208,24 +232,26 @@ function generateArenaOpponent(playerLevel) {
     const attack = 15 + (arenaLevel * 2);
     const defense = 8 + (arenaLevel * 1);
 
-    return {
+    const opponent = {
         name: `Arena Champion Lv.${arenaLevel}`,
         level: arenaLevel,
         hp: hp,
-        currentHp: hp,
         attack: attack,
         defense: defense,
         gold: arenaLevel * 5,
         exp: arenaLevel * 8,
         description: 'Professional fighter from the grand arena'
     };
+    
+    opponent.currentHp = opponent.hp;
+    return opponent;
 }
 
 // ========== SISTEMA DE COMBATE ==========
 
 function createBattleEmbed(interaction, player, enemy, title) {
     const playerHpBar = createHealthBar(player.hp, player.hp);
-    const enemyHpBar = createHealthBar(enemy.currentHp, enemy.hp);
+    const enemyHpBar = createHealthBar(enemy.currentHp || enemy.hp, enemy.hp);
 
     return new EmbedBuilder()
         .setTitle(title)
@@ -234,7 +260,7 @@ function createBattleEmbed(interaction, player, enemy, title) {
         .addFields(
             { 
                 name: `🧙 ${interaction.user.username}`, 
-                value: `Level ${player.level} ${player.class}\nHP: ${playerHpBar}\n⚔️ ATK: ${player.attack} 🛡️ DEF: ${player.defense}`,
+                value: `Level ${player.level} ${player.class}\nHP: ${playerHpBar}\nMP: ${player.mp || 0}/${player.maxMp || 30}\n⚔️ ATK: ${player.attack} 🛡️ DEF: ${player.defense}`,
                 inline: true 
             },
             { 
