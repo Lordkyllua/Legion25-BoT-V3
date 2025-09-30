@@ -4,11 +4,31 @@ const Shop = require('../../models/Shop');
 module.exports = {
     customId: 'shop_other_classes',
     async execute(interaction) {
-        const originalEmbed = interaction.message.embeds[0];
-        const category = originalEmbed.title.toLowerCase().replace(' items', '');
-        
         try {
+            // Obtener la categoría del mensaje original de manera más robusta
+            const originalEmbed = interaction.message.embeds[0];
+            let category = 'weapon'; // Valor por defecto
+            
+            // Extraer la categoría del título del embed
+            if (originalEmbed && originalEmbed.title) {
+                const title = originalEmbed.title.toLowerCase();
+                if (title.includes('weapon')) category = 'weapon';
+                else if (title.includes('armor')) category = 'armor';
+                else if (title.includes('accessory')) category = 'accessory';
+                else if (title.includes('potion')) category = 'potion';
+                else if (title.includes('consumable')) category = 'consumable';
+            }
+
+            console.log(`Loading ${category} items for all classes...`);
+
             const categoryItems = await Shop.getItemsByCategory(category);
+
+            if (categoryItems.length === 0) {
+                return await interaction.update({ 
+                    content: `No items found in the ${category} category.`, 
+                    components: [] 
+                });
+            }
 
             const embed = new EmbedBuilder()
                 .setTitle(`👥 All Classes - ${category.charAt(0).toUpperCase() + category.slice(1)} Items`)
@@ -24,23 +44,33 @@ module.exports = {
                 all: categoryItems.filter(item => item.class === 'all')
             };
 
+            let hasItems = false;
+
             for (const [classType, items] of Object.entries(classes)) {
                 if (items.length > 0) {
+                    hasItems = true;
                     const classDisplay = classType === 'all' ? 'All Classes' : 
                                         classType.charAt(0).toUpperCase() + classType.slice(1);
                     
-                    const itemList = items.slice(0, 3).map(item => 
-                        `**${item.name}** (ID: ${item.id}) - 🪙 ${item.price}`
-                    ).join('\n');
+                    const itemList = items.slice(0, 4).map(item => 
+                        `${getRarityEmoji(item.rarity)} **${item.name}** (ID: ${item.id})\n🪙 ${item.price} | Level: ${item.level}`
+                    ).join('\n\n');
                     
-                    const moreText = items.length > 3 ? `\n...and ${items.length - 3} more` : '';
+                    const moreText = items.length > 4 ? `\n\n*...and ${items.length - 4} more*` : '';
                     
                     embed.addFields({
-                        name: `${getClassEmoji(classType)} ${classDisplay}`,
+                        name: `${getClassEmoji(classType)} ${classDisplay} (${items.length})`,
                         value: itemList + moreText,
-                        inline: true
+                        inline: false
                     });
                 }
+            }
+
+            if (!hasItems) {
+                return await interaction.update({ 
+                    content: `No items available in ${category} category for any class.`, 
+                    components: [] 
+                });
             }
 
             const buyButton = new ButtonBuilder()
@@ -51,7 +81,7 @@ module.exports = {
 
             const backButton = new ButtonBuilder()
                 .setCustomId('shop_back')
-                .setLabel('Back to My Class')
+                .setLabel('Back to Shop')
                 .setStyle(ButtonStyle.Secondary)
                 .setEmoji('↩️');
 
@@ -62,7 +92,7 @@ module.exports = {
         } catch (error) {
             console.error('Error showing other classes:', error);
             await interaction.reply({ 
-                content: 'An error occurred while loading items.', 
+                content: 'An error occurred while loading items. Please try using `/shop` again.', 
                 ephemeral: true 
             });
         }
@@ -77,4 +107,15 @@ function getClassEmoji(className) {
         all: '👥'
     };
     return emojis[className] || '📦';
+}
+
+function getRarityEmoji(rarity) {
+    const emojis = {
+        common: '⚪',
+        uncommon: '🟢',
+        rare: '🔵',
+        epic: '🟣',
+        legendary: '🟡'
+    };
+    return emojis[rarity] || '⚪';
 }
