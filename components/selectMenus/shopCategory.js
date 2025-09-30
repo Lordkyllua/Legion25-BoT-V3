@@ -58,8 +58,8 @@ module.exports = {
 
             if (categoryItems.length > 8) {
                 embed.addFields({
-                    name: 'More Items',
-                    value: `There are ${categoryItems.length - 8} more items in this category.`,
+                    name: '📋 Category Info',
+                    value: `Showing 8 of ${categoryItems.length} items. Use "Show All Classes" to see everything.`,
                     inline: false
                 });
             }
