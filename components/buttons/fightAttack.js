@@ -7,7 +7,6 @@ const { calculateDamage, createBattleEmbed } = require('../../commands/fight');
 module.exports = {
     customId: 'fight_attack_',
     async execute(interaction) {
-        // Extraer el tipo de batalla del customId (monster, boss, elite)
         const battleType = interaction.customId.replace('fight_attack_', '');
         const userId = interaction.user.id;
         const battleData = interaction.client.battleData?.[userId];
@@ -106,8 +105,8 @@ async function handleVictory(interaction, player, enemy, type, battleLog) {
     const goldReward = type === 'boss' ? enemy.gold * 3 : enemy.gold;
     
     try {
-        // Add rewards
-        await addExperience(userId, expReward);
+        // Add rewards - CORREGIDO: pasar la interacción
+        const levelUpResult = await addExperience(userId, expReward, interaction);
         await addGold(userId, goldReward);
         
         // Update user statistics
@@ -117,21 +116,29 @@ async function handleVictory(interaction, player, enemy, type, battleLog) {
             await User.updateRPG(userId, user.rpg);
         }
 
-        const victoryEmbed = new EmbedBuilder()
-            .setTitle('🎉 Victory!')
-            .setColor(0x00FF00)
-            .setDescription(`You defeated **${enemy.name}**!`)
-            .addFields(
-                { name: '🏆 Rewards', value: `⭐ ${expReward} EXP\n🪙 ${goldReward} Gold`, inline: true },
-                { name: '💀 Enemy', value: enemy.name, inline: true },
-                { name: '📜 Battle Log', value: battleLog, inline: false }
-            )
-            .setFooter({ text: 'Great battle! Your rewards have been added.' });
+        // Solo mostrar victory embed si no hubo level up (porque ya se mostró el level up)
+        if (!levelUpResult || levelUpResult.levelsGained === 0) {
+            const victoryEmbed = new EmbedBuilder()
+                .setTitle('🎉 Victory!')
+                .setColor(0x00FF00)
+                .setDescription(`You defeated **${enemy.name}**!`)
+                .addFields(
+                    { name: '🏆 Rewards', value: `⭐ ${expReward} EXP\n🪙 ${goldReward} Gold`, inline: true },
+                    { name: '💀 Enemy', value: enemy.name, inline: true },
+                    { name: '📜 Battle Log', value: battleLog, inline: false }
+                )
+                .setFooter({ text: 'Great battle! Your rewards have been added.' });
 
-        await interaction.update({ 
-            embeds: [victoryEmbed], 
-            components: [] 
-        });
+            await interaction.update({ 
+                embeds: [victoryEmbed], 
+                components: [] 
+            });
+        } else {
+            // Si hubo level up, ya se mostró el mensaje, solo actualizar componentes
+            await interaction.update({ 
+                components: [] 
+            });
+        }
     } catch (error) {
         console.error('Error in handleVictory:', error);
         const errorEmbed = new EmbedBuilder()
