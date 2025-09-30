@@ -63,23 +63,24 @@ class User {
         return result;
     }
 
-    static async updateRPG(userId, rpgUpdate) {
+    static async updateRPG(userId, rpgData) {
+    try {
         const result = await this.collection().findOneAndUpdate(
-            { userId },
-            { $set: { rpg: rpgUpdate } },
-            { returnDocument: 'after' }
+            { userId: userId },
+            { 
+                $set: { 
+                    rpg: rpgData,
+                    updatedAt: new Date()
+                } 
+            },
+            { returnDocument: 'after', upsert: true }
         );
         return result;
+    } catch (error) {
+        console.error('Error updating RPG data:', error);
+        throw error;
     }
-
-    static async addToInventory(userId, item) {
-        const result = await this.collection().findOneAndUpdate(
-            { userId },
-            { $push: { 'rpg.inventory': item } },
-            { returnDocument: 'after' }
-        );
-        return result;
-    }
+}
 
     static async removeFromInventory(userId, itemId) {
         const result = await this.collection().findOneAndUpdate(
