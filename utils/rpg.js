@@ -1,68 +1,20 @@
-const User = require('../models/User');
-const { addGold } = require('./gold');
-
-async function createCharacter(userId, className) {
-    const baseStats = {
-        mage: { 
-            hp: 50, maxHp: 50, mp: 100, maxMp: 100, 
-            attack: 5, defense: 3, magic: 15, agility: 6, intelligence: 12,
-            class: 'mage', evolution: 'Apprentice'
-        },
-        warrior: { 
-            hp: 100, maxHp: 100, mp: 30, maxMp: 30,
-            attack: 12, defense: 10, magic: 2, agility: 4, strength: 14,
-            class: 'warrior', evolution: 'Squire'
-        },
-        archer: { 
-            hp: 70, maxHp: 70, mp: 60, maxMp: 60,
-            attack: 10, defense: 5, magic: 4, agility: 12, dexterity: 13,
-            class: 'archer', evolution: 'Hunter'
-        }
-    };
-
-    const userData = {
-        rpg: {
-            ...baseStats[className],
-            level: 1,
-            exp: 0,
-            maxExp: 100,
-            inventory: [],
-            equipped: {
-                weapon: null,
-                armor: null,
-                accessory: null
-            },
-            skills: getStartingSkills(className),
-            questsCompleted: 0,
-            monstersDefeated: 0,
-            createdAt: new Date()
-        }
-    };
-
-    const user = await User.create(userId, userData);
+async function addExperience(userId, exp, interaction = null) {
+    console.log(`📊 Adding ${exp} EXP to user ${userId}`);
     
-    // Add starting gold
-    await addGold(userId, 50);
-
-    return user.rpg;
-}
-
-function getStartingSkills(className) {
-    const skills = {
-        mage: ['Fireball', 'Magic Shield'],
-        warrior: ['Power Strike', 'Taunt'],
-        archer: ['Quick Shot', 'Dodge']
-    };
-    return skills[className] || [];
-}
-
-async function addExperience(userId, exp) {
     const user = await User.findById(userId);
-    if (!user || !user.rpg) return null;
+    if (!user || !user.rpg) {
+        console.log('❌ User or RPG data not found');
+        return null;
+    }
 
     const rpg = user.rpg;
+    const oldLevel = rpg.level;
+    console.log(`📈 Before: Level ${oldLevel}, EXP: ${rpg.exp}/${rpg.maxExp}`);
+    
     rpg.exp += exp;
+    
     let levelsGained = 0;
+    let levelUpData = null;
     
     // Check for level up
     while (rpg.exp >= rpg.maxExp && rpg.level < 100) {
@@ -70,6 +22,8 @@ async function addExperience(userId, exp) {
         rpg.level += 1;
         levelsGained++;
         rpg.maxExp = Math.floor(rpg.maxExp * 1.2);
+        
+        console.log(`🎉 Level up! New level: ${rpg.level}, EXP: ${rpg.exp}/${rpg.maxExp}`);
         
         // Increase stats on level up
         rpg.maxHp += Math.floor(rpg.maxHp * 0.1);
@@ -90,101 +44,47 @@ async function addExperience(userId, exp) {
         }
 
         // Check for evolution
-        checkEvolution(rpg);
+        const newEvolution = checkEvolution(rpg);
         
         // Reward gold for level up
         const goldReward = rpg.level * 10;
         await addGold(userId, goldReward);
+
+        // Store level up data for the highest level reached
+        levelUpData = {
+            level: rpg.level,
+            evolution: newEvolution,
+            goldReward: goldReward,
+            stats: {
+                maxHp: rpg.maxHp,
+                maxMp: rpg.maxMp,
+                attack: rpg.attack,
+                defense: rpg.defense,
+                magic: rpg.magic,
+                agility: rpg.agility
+            }
+        };
     }
 
+    // Guardar los cambios en la base de datos
     await User.updateRPG(userId, rpg);
+    console.log(`💾 Saved RPG data. Level: ${rpg.level}, EXP: ${rpg.exp}/${rpg.maxExp}`);
     
-    return {
+    const result = {
         user: rpg,
         levelsGained: levelsGained,
-        reachedMaxLevel: rpg.level >= 100
-    };
-}
-
-function checkEvolution(rpg) {
-    const evolutions = {
-        mage: [
-            { level: 1, name: 'Apprentice' },
-            { level: 20, name: 'Wizard' },
-            { level: 50, name: 'Archmage' },
-            { level: 80, name: 'Mage Lord' }
-        ],
-        warrior: [
-            { level: 1, name: 'Squire' },
-            { level: 20, name: 'Knight' },
-            { level: 50, name: 'Champion' },
-            { level: 80, name: 'War Lord' }
-        ],
-        archer: [
-            { level: 1, name: 'Hunter' },
-            { level: 20, name: 'Ranger' },
-            { level: 50, name: 'Sharpshooter' },
-            { level: 80, name: 'Bow Master' }
-        ]
+        reachedMaxLevel: rpg.level >= 100,
+        oldLevel: oldLevel,
+        levelUpData: levelUpData
     };
 
-    const classEvolutions = evolutions[rpg.class];
-    for (let i = classEvolutions.length - 1; i >= 0; i--) {
-        if (rpg.level >= classEvolutions[i].level) {
-            if (rpg.evolution !== classEvolutions[i].name) {
-                rpg.evolution = classEvolutions[i].name;
-                return classEvolutions[i].name;
-            }
-            break;
-        }
+    // Si hay una interacción y se subió de nivel, mostrar mensaje
+    if (interaction && levelsGained > 0 && levelUpData) {
+        console.log(`🎊 Showing level up message for level ${levelUpData.level}`);
+        await showLevelUpMessage(interaction, result);
+    } else if (levelsGained > 0) {
+        console.log(`🎊 Level up detected but no interaction provided: Level ${levelUpData.level}`);
     }
-    return rpg.evolution;
-}
-
-async function getCharacter(userId) {
-    const user = await User.findById(userId);
-    return user ? user.rpg : null;
-}
-
-function calculateBattleRewards(monsterLevel) {
-    const baseExp = monsterLevel * 10;
-    const baseGold = monsterLevel * 5;
     
-    const exp = Math.floor(baseExp * (0.8 + Math.random() * 0.4));
-    const gold = Math.floor(baseGold * (0.8 + Math.random() * 0.4));
-    
-    return { exp, gold };
+    return result;
 }
-
-// Nueva función para completar quests
-async function completeQuest(userId, exp, gold) {
-    try {
-        const user = await User.findById(userId);
-        if (!user || !user.rpg) return null;
-
-        // Add experience and gold
-        const levelUp = await addExperience(userId, exp);
-        await addGold(userId, gold);
-
-        // Update quest statistics
-        user.rpg.questsCompleted = (user.rpg.questsCompleted || 0) + 1;
-        await User.updateRPG(userId, user.rpg);
-
-        return {
-            levelUp: levelUp,
-            questsCompleted: user.rpg.questsCompleted,
-            rewards: { exp, gold }
-        };
-    } catch (error) {
-        console.error('Error completing quest:', error);
-        throw error;
-    }
-}
-
-module.exports = {
-    createCharacter,
-    addExperience,
-    getCharacter,
-    calculateBattleRewards,
-    completeQuest
-};
