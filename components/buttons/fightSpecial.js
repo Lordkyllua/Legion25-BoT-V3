@@ -1,5 +1,6 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const { addExperience, addGold } = require('../../utils/rpg');
+const { addExperience } = require('../../utils/rpg');
+const { addGold } = require('../../utils/gold');
 const User = require('../../models/User');
 const { calculateDamage, createBattleEmbed } = require('../../commands/fight');
 
@@ -101,35 +102,50 @@ module.exports = {
     },
 };
 
-// Reutilizar las funciones de victoria/derrota del archivo anterior
 async function handleVictory(interaction, player, enemy, type, battleLog) {
     const userId = interaction.user.id;
     
     const expReward = type === 'boss' ? enemy.exp * 2 : enemy.exp;
     const goldReward = type === 'boss' ? enemy.gold * 3 : enemy.gold;
     
-    await addExperience(userId, expReward);
-    await addGold(userId, goldReward);
-    
-    const user = await User.findById(userId);
-    user.rpg.monstersDefeated = (user.rpg.monstersDefeated || 0) + 1;
-    await User.updateRPG(userId, user.rpg);
+    try {
+        await addExperience(userId, expReward);
+        await addGold(userId, goldReward);
+        
+        const user = await User.findById(userId);
+        if (user && user.rpg) {
+            user.rpg.monstersDefeated = (user.rpg.monstersDefeated || 0) + 1;
+            await User.updateRPG(userId, user.rpg);
+        }
 
-    const victoryEmbed = new EmbedBuilder()
-        .setTitle('🎉 Victory!')
-        .setColor(0x00FF00)
-        .setDescription(`You defeated **${enemy.name}** with a special attack!`)
-        .addFields(
-            { name: '🏆 Rewards', value: `⭐ ${expReward} EXP\n🪙 ${goldReward} Gold`, inline: true },
-            { name: '💀 Enemy', value: enemy.name, inline: true },
-            { name: '📜 Battle Log', value: battleLog, inline: false }
-        )
-        .setFooter({ text: 'Excellent use of special attack!' });
+        const victoryEmbed = new EmbedBuilder()
+            .setTitle('🎉 Victory!')
+            .setColor(0x00FF00)
+            .setDescription(`You defeated **${enemy.name}** with a special attack!`)
+            .addFields(
+                { name: '🏆 Rewards', value: `⭐ ${expReward} EXP\n🪙 ${goldReward} Gold`, inline: true },
+                { name: '💀 Enemy', value: enemy.name, inline: true },
+                { name: '📜 Battle Log', value: battleLog, inline: false }
+            )
+            .setFooter({ text: 'Excellent use of special attack!' });
 
-    await interaction.update({ 
-        embeds: [victoryEmbed], 
-        components: [] 
-    });
+        await interaction.update({ 
+            embeds: [victoryEmbed], 
+            components: [] 
+        });
+    } catch (error) {
+        console.error('Error in handleVictory:', error);
+        const errorEmbed = new EmbedBuilder()
+            .setTitle('❌ Error')
+            .setColor(0xFF0000)
+            .setDescription('There was an error processing your victory rewards.')
+            .setFooter({ text: 'Please try again later.' });
+
+        await interaction.update({ 
+            embeds: [errorEmbed], 
+            components: [] 
+        });
+    }
 }
 
 async function handleDefeat(interaction, enemy, battleLog) {
