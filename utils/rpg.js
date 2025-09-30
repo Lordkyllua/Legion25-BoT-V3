@@ -1,5 +1,5 @@
 const User = require('../models/User');
-const Gold = require('../models/Gold');
+const { addGold } = require('./gold');
 
 async function createCharacter(userId, className) {
     const baseStats = {
@@ -42,7 +42,7 @@ async function createCharacter(userId, className) {
     const user = await User.create(userId, userData);
     
     // Add starting gold
-    await Gold.addGold(userId, 50);
+    await addGold(userId, 50);
 
     return user.rpg;
 }
@@ -94,7 +94,7 @@ async function addExperience(userId, exp) {
         
         // Reward gold for level up
         const goldReward = rpg.level * 10;
-        await Gold.addGold(userId, goldReward);
+        await addGold(userId, goldReward);
     }
 
     await User.updateRPG(userId, rpg);
@@ -164,7 +164,7 @@ async function completeQuest(userId, exp, gold) {
 
         // Add experience and gold
         const levelUp = await addExperience(userId, exp);
-        await Gold.addGold(userId, gold);
+        await addGold(userId, gold);
 
         // Update quest statistics
         user.rpg.questsCompleted = (user.rpg.questsCompleted || 0) + 1;
