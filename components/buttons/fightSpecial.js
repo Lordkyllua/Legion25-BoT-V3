@@ -7,6 +7,7 @@ const { calculateDamage, createBattleEmbed } = require('../../commands/fight');
 module.exports = {
     customId: 'fight_special_',
     async execute(interaction) {
+        // Extraer el tipo de batalla del customId (monster, boss, elite)
         const battleType = interaction.customId.replace('fight_special_', '');
         const userId = interaction.user.id;
         const battleData = interaction.client.battleData?.[userId];
