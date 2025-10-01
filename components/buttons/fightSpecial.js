@@ -1,177 +1,126 @@
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const { addExperience } = require('../../../utils/rpg'); // Ruta corregida
-const { addGold } = require('../../../utils/gold'); // Ruta corregida
-const User = require('../../../models/User'); // Ruta corregida
-const { calculateDamage, createBattleEmbed } = require('../../../commands/fight'); // Ruta corregida
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require('discord.js');
+const { Battle } = require('../../models/Battle');
+const { Player } = require('../../models/Player');
+const RPGUtils = require('../../utils/rpg');
 
 module.exports = {
-    customId: 'fight_special_',
+    data: { name: 'fight_special_' },
+    
     async execute(interaction) {
-        const battleType = interaction.customId.replace('fight_special_', '');
-        const userId = interaction.user.id;
-        const battleData = interaction.client.battleData?.[userId];
+        try {
+            await interaction.deferUpdate();
 
-        if (!battleData) {
-            await interaction.reply({ 
-                content: 'Battle data not found. Start a new fight with `/fight`.', 
-                ephemeral: true 
-            });
-            return;
-        }
+            const userId = interaction.user.id;
+            const battleType = interaction.customId.replace('fight_special_', '');
 
-        let { player, enemy, type } = battleData;
-        
-        // Player special attack (costs MP)
-        if (player.mp < 20) {
-            await interaction.reply({ 
-                content: 'Not enough MP for special attack! Use normal attack.', 
-                ephemeral: true 
-            });
-            return;
-        }
+            // Buscar batalla activa
+            let battle = await Battle.findOne({ playerId: userId });
+            
+            if (!battle) {
+                battle = await RPGUtils.createBattle(userId, battleType);
+            }
 
-        // Deduct MP
-        player.mp -= 20;
-        
-        const playerAttack = calculateDamage(player, enemy, true);
-        enemy.currentHp -= playerAttack.damage;
+            const player = await Player.findById(battle.playerId);
+            if (!player) {
+                return await interaction.editReply({
+                    content: '❌ No se encontró tu personaje.',
+                    components: []
+                });
+            }
 
-        let battleLog = `💥 **${interaction.user.username}** uses Special Attack!\n`;
-        battleLog += `Consumed 20 MP. Dealt **${playerAttack.damage}** damage!\n`;
+            // Verificar MP suficiente para ataque especial
+            if (player.currentMp < 10) {
+                return await interaction.editReply({
+                    content: '❌ No tienes suficiente MP para un ataque especial.',
+                    ephemeral: true
+                });
+            }
 
-        // Check if enemy is defeated
-        if (enemy.currentHp <= 0) {
-            await handleVictory(interaction, player, enemy, type, battleLog);
-            delete interaction.client.battleData[userId];
-            return;
-        }
+            // Jugador usa ataque especial
+            player.currentMp -= 10;
+            const specialDamage = RPGUtils.calculateDamage(player, battle.enemy, true);
+            battle.enemy.currentHp -= specialDamage;
 
-        // Enemy attack
-        const enemyAttack = calculateDamage(enemy, player);
-        player.currentHp -= enemyAttack.damage;
-
-        battleLog += `\n🦹 **${enemy.name}** counterattacks!\n`;
-        battleLog += `Dealt **${enemyAttack.damage}** damage.\n`;
-
-        // Check if player is defeated
-        if (player.currentHp <= 0) {
-            await handleDefeat(interaction, enemy, battleLog);
-            delete interaction.client.battleData[userId];
-            return;
-        }
-
-        // Update battle data
-        battleData.player.currentHp = player.currentHp;
-        battleData.player.mp = player.mp;
-        battleData.enemy.currentHp = enemy.currentHp;
-        interaction.client.battleData[userId] = battleData;
-
-        // Continue battle
-        const embed = createBattleEmbed(interaction, player, enemy, '💥 Special Attack!');
-        embed.addFields({
-            name: '📜 Battle Log',
-            value: battleLog,
-            inline: false
-        });
-
-        const attackButton = new ButtonBuilder()
-            .setCustomId(`fight_attack_${type}`)
-            .setLabel('Attack')
-            .setStyle(ButtonStyle.Danger)
-            .setEmoji('⚔️');
-
-        const specialButton = new ButtonBuilder()
-            .setCustomId(`fight_special_${type}`)
-            .setLabel('Special Attack')
-            .setStyle(ButtonStyle.Primary)
-            .setEmoji('💥')
-            .setDisabled(player.mp < 20); // Disable if not enough MP
-
-        const fleeButton = new ButtonBuilder()
-            .setCustomId('fight_flee')
-            .setLabel('Flee')
-            .setStyle(ButtonStyle.Secondary)
-            .setEmoji('🏃‍♂️');
-
-        const row = new ActionRowBuilder().addComponents(attackButton, specialButton, fleeButton);
-
-        await interaction.update({ 
-            embeds: [embed], 
-            components: [row] 
-        });
-    },
-};
-
-async function handleVictory(interaction, player, enemy, type, battleLog) {
-    const userId = interaction.user.id;
-    
-    const expReward = type === 'boss' ? enemy.exp * 2 : enemy.exp;
-    const goldReward = type === 'boss' ? enemy.gold * 3 : enemy.gold;
-    
-    try {
-        console.log(`🎯 Victory rewards: ${expReward} EXP, ${goldReward} Gold`);
-        
-        // Add rewards
-        const levelUpResult = await addExperience(userId, expReward, interaction);
-        await addGold(userId, goldReward);
-        
-        const user = await User.findById(userId);
-        if (user && user.rpg) {
-            user.rpg.monstersDefeated = (user.rpg.monstersDefeated || 0) + 1;
-            await User.updateRPG(userId, user.rpg);
-        }
-
-        // Solo mostrar victory embed si no hubo level up
-        if (!levelUpResult || levelUpResult.levelsGained === 0) {
-            const victoryEmbed = new EmbedBuilder()
-                .setTitle('🎉 Victory!')
-                .setColor(0x00FF00)
-                .setDescription(`You defeated **${enemy.name}** with a special attack!`)
+            const battleEmbed = new EmbedBuilder()
+                .setTitle('✨ Ataque Especial')
+                .setDescription(`**${player.username}** usa un ataque especial contra **${battle.enemy.name}**!`)
                 .addFields(
-                    { name: '🏆 Rewards', value: `⭐ ${expReward} EXP\n🪙 ${goldReward} Gold`, inline: true },
-                    { name: '💀 Enemy', value: enemy.name, inline: true },
-                    { name: '📜 Battle Log', value: battleLog, inline: false }
+                    { 
+                        name: '👤 Jugador', 
+                        value: `HP: ${player.currentHp}/${player.hp}\nMP: ${player.currentMp}/${player.mp}\nDaño: ${specialDamage} (Especial)`,
+                        inline: true 
+                    },
+                    { 
+                        name: '👹 Enemigo', 
+                        value: `HP: ${battle.enemy.currentHp}/${battle.enemy.hp}`,
+                        inline: true 
+                    }
                 )
-                .setFooter({ text: 'Excellent use of special attack!' });
+                .setColor(0x800080)
+                .setTimestamp();
 
-            await interaction.update({ 
-                embeds: [victoryEmbed], 
-                components: [] 
+            // Verificar si el enemigo fue derrotado
+            if (battle.enemy.currentHp <= 0) {
+                battle.enemy.currentHp = 0;
+                await battle.save();
+                
+                // Usar la función handleVictory de fightAttack
+                const fightAttack = require('./fightAttack');
+                return await fightAttack.handleVictory(interaction, battle, player);
+            }
+
+            // Enemigo contraataca
+            const enemyDamage = RPGUtils.calculateDamage(battle.enemy, player);
+            player.currentHp -= enemyDamage;
+
+            battleEmbed.addFields({
+                name: '💥 Contraataque',
+                value: `**${battle.enemy.name}** te ataca por **${enemyDamage}** de daño!`,
+                inline: false
             });
-        } else {
-            // Si hubo level up, ya se mostró el mensaje, solo actualizar componentes
-            await interaction.update({ 
-                components: [] 
+
+            // Verificar si el jugador fue derrotado
+            if (player.currentHp <= 0) {
+                player.currentHp = 0;
+                await player.save();
+                await battle.save();
+                
+                // Usar la función handleDefeat de fightAttack
+                const fightAttack = require('./fightAttack');
+                return await fightAttack.handleDefeat(interaction, player);
+            }
+
+            await player.save();
+            await battle.save();
+
+            // Botones actualizados
+            const buttons = new ActionRowBuilder().addComponents(
+                new ButtonBuilder()
+                    .setCustomId('fight_attack_monster')
+                    .setLabel('⚔️ Atacar')
+                    .setStyle(ButtonStyle.Primary),
+                new ButtonBuilder()
+                    .setCustomId('fight_special_monster')
+                    .label('✨ Ataque Especial')
+                    .setStyle(ButtonStyle.Danger)
+                    .setDisabled(player.currentMp < 10),
+                new ButtonBuilder()
+                    .setCustomId('fight_flee')
+                    .setLabel('🏃‍♂️ Huir')
+                    .setStyle(ButtonStyle.Secondary)
+            );
+
+            await interaction.editReply({
+                embeds: [battleEmbed],
+                components: [buttons]
+            });
+
+        } catch (error) {
+            console.error('Error in fightSpecial button:', error);
+            await interaction.editReply({
+                content: '❌ Ocurrió un error durante el ataque especial.',
+                components: []
             });
         }
-    } catch (error) {
-        console.error('Error in handleVictory:', error);
-        const errorEmbed = new EmbedBuilder()
-            .setTitle('❌ Error')
-            .setColor(0xFF0000)
-            .setDescription('There was an error processing your victory rewards.')
-            .setFooter({ text: 'Please try again later.' });
-
-        await interaction.update({ 
-            embeds: [errorEmbed], 
-            components: [] 
-        });
     }
-}
-
-async function handleDefeat(interaction, enemy, battleLog) {
-    const defeatEmbed = new EmbedBuilder()
-        .setTitle('💀 Defeat')
-        .setColor(0xFF0000)
-        .setDescription(`You were defeated by **${enemy.name}**!`)
-        .addFields(
-            { name: '💀 Enemy', value: enemy.name, inline: true },
-            { name: '📜 Battle Log', value: battleLog, inline: false }
-        )
-        .setFooter({ text: 'Your special attack wasn\'t enough...' });
-
-    await interaction.update({ 
-        embeds: [defeatEmbed], 
-        components: [] 
-    });
-}
+};
