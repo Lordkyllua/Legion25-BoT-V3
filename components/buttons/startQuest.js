@@ -1,5 +1,5 @@
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require('discord.js');
-const { Player } = require('../../models/Player');
+const Player = require('../../models/Player');
 const RPGUtils = require('../../utils/rpg');
 
 module.exports = {
@@ -15,14 +15,22 @@ module.exports = {
             // Buscar o crear jugador
             let player = await Player.findOne({ userId });
             if (!player) {
-                const createResult = await RPGUtils.createCharacter(userId, interaction.user.username);
-                if (!createResult) {
-                    return await interaction.editReply({
-                        content: '❌ Error al crear tu personaje. Por favor, intenta nuevamente.',
-                        ephemeral: true
-                    });
-                }
-                player = createResult;
+                player = await RPGUtils.createCharacter(userId, interaction.user.username);
+            }
+
+            // Verificar requisitos de nivel para misiones
+            if (difficulty === 'medium' && player.level < 3) {
+                return await interaction.editReply({
+                    content: '❌ Necesitas ser nivel 3 o superior para misiones medias.',
+                    ephemeral: true
+                });
+            }
+
+            if (difficulty === 'hard' && player.level < 6) {
+                return await interaction.editReply({
+                    content: '❌ Necesitas ser nivel 6 o superior para misiones difíciles.',
+                    ephemeral: true
+                });
             }
 
             // Iniciar misión
@@ -32,16 +40,10 @@ module.exports = {
                 .addFields(
                     { name: 'Dificultad', value: difficulty, inline: true },
                     { name: 'Jugador', value: player.username, inline: true },
-                    { name: 'Clase', value: player.class, inline: true }
+                    { name: 'Clase', value: player.class, inline: true },
+                    { name: 'Nivel', value: `Nivel ${player.level}`, inline: true }
                 )
                 .setColor(0x00FF00)
-                .setTimestamp();
-
-            // Simular progreso de misión (3 segundos)
-            const progressEmbed = new EmbedBuilder()
-                .setTitle('⏳ Progreso de la Misión')
-                .setDescription('Completando misión...')
-                .setColor(0xFFFF00)
                 .setTimestamp();
 
             await interaction.editReply({ embeds: [questEmbed] });
