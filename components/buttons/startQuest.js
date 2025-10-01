@@ -1,92 +1,93 @@
-const { EmbedBuilder } = require('discord.js');
-const { completeQuest } = require('../../utils/rpg');
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require('discord.js');
+const { Player } = require('../../models/Player');
+const RPGUtils = require('../../utils/rpg');
 
 module.exports = {
-    customId: 'start_quest_', // El _ al final indica que es un prefijo dinámico
+    data: { name: 'start_quest_' },
+    
     async execute(interaction) {
-        const difficulty = interaction.customId.replace('start_quest_', '');
-        
-        console.log(`🏹 Starting ${difficulty} quest for ${interaction.user.tag}`.green);
-        
-        const questRewards = {
-            easy: { exp: 50, gold: 25, success: 85 },
-            medium: { exp: 120, gold: 60, success: 65 },
-            hard: { exp: 250, gold: 125, success: 45 },
-            expert: { exp: 500, gold: 250, success: 25 }
-        };
+        try {
+            await interaction.deferReply({ ephemeral: true });
 
-        const reward = questRewards[difficulty] || questRewards.easy;
-        
-        // Simulate quest outcome
-        const success = Math.random() * 100 < reward.success;
-        
-        if (success) {
-            // Quest successful
-            try {
-                const result = await completeQuest(interaction.user.id, reward.exp, reward.gold);
-                
-                const embed = new EmbedBuilder()
-                    .setTitle('🎉 Quest Completed!')
-                    .setColor(0x00FF00)
-                    .setDescription('You successfully completed your quest!')
-                    .addFields(
-                        { name: '🏆 Rewards', value: `⭐ ${reward.exp} EXP\n🪙 ${reward.gold} Gold`, inline: true },
-                        { name: '📊 Difficulty', value: difficulty.charAt(0).toUpperCase() + difficulty.slice(1), inline: true },
-                        { name: '📈 Total Quests', value: `${result.questsCompleted} completed`, inline: true }
-                    )
-                    .setFooter({ text: 'Great job adventurer!' });
+            const difficulty = interaction.customId.replace('start_quest_', '');
+            const userId = interaction.user.id;
 
-                // Add level up message if applicable
-                if (result.levelUp && result.levelUp.levelsGained > 0) {
-                    embed.addFields({
-                        name: '🎊 Level Up!',
-                        value: `You reached level ${result.levelUp.user.level}!`,
-                        inline: false
+            // Buscar o crear jugador
+            let player = await Player.findOne({ userId });
+            if (!player) {
+                const createResult = await RPGUtils.createCharacter(userId, interaction.user.username);
+                if (!createResult) {
+                    return await interaction.editReply({
+                        content: '❌ Error al crear tu personaje. Por favor, intenta nuevamente.',
+                        ephemeral: true
                     });
                 }
+                player = createResult;
+            }
 
-                await interaction.update({ 
-                    embeds: [embed], 
-                    components: [] 
-                });
-                
-                console.log(`✅ Quest successful for ${interaction.user.tag}`.green);
-            } catch (error) {
-                console.error('Error rewarding quest:', error);
-                await interaction.update({ 
-                    content: 'There was an error processing your quest rewards.', 
-                    components: [] 
+            // Iniciar misión
+            const questEmbed = new EmbedBuilder()
+                .setTitle(`🏹 Misión ${difficulty.toUpperCase()} Iniciada`)
+                .setDescription(`¡${interaction.user.username} ha comenzado una misión ${difficulty}!`)
+                .addFields(
+                    { name: 'Dificultad', value: difficulty, inline: true },
+                    { name: 'Jugador', value: player.username, inline: true },
+                    { name: 'Clase', value: player.class, inline: true }
+                )
+                .setColor(0x00FF00)
+                .setTimestamp();
+
+            // Simular progreso de misión (3 segundos)
+            const progressEmbed = new EmbedBuilder()
+                .setTitle('⏳ Progreso de la Misión')
+                .setDescription('Completando misión...')
+                .setColor(0xFFFF00)
+                .setTimestamp();
+
+            await interaction.editReply({ embeds: [questEmbed] });
+
+            // Esperar 3 segundos para simular la misión
+            await new Promise(resolve => setTimeout(resolve, 3000));
+
+            // Completar misión y dar recompensas
+            const completeResult = await RPGUtils.completeQuest(player, difficulty);
+            
+            if (!completeResult.success) {
+                return await interaction.editReply({
+                    content: `❌ Error al completar la misión: ${completeResult.error}`,
+                    ephemeral: true
                 });
             }
-        } else {
-            // Quest failed
-            const embed = new EmbedBuilder()
-                .setTitle('💀 Quest Failed')
-                .setColor(0xFF0000)
-                .setDescription('Your quest was not successful. Better luck next time!')
+
+            const completeEmbed = new EmbedBuilder()
+                .setTitle('✅ Misión Completada')
+                .setDescription(`¡${interaction.user.username} ha completado la misión ${difficulty} exitosamente!`)
                 .addFields(
-                    { name: '📊 Difficulty', value: difficulty.charAt(0).toUpperCase() + difficulty.slice(1), inline: true },
-                    { name: '🎯 Result', value: 'Failed', inline: true },
-                    { name: '💡 Tip', value: getFailureTip(difficulty), inline: true }
+                    { name: 'Experiencia Obtenida', value: `+${completeResult.exp} EXP`, inline: true },
+                    { name: 'Oro Obtenido', value: `+${completeResult.gold} 🪙`, inline: true },
+                    { name: 'Nivel Actual', value: `Nivel ${player.level}`, inline: true }
                 )
-                .setFooter({ text: 'Don\'t give up!' });
+                .setColor(0x00FF00)
+                .setTimestamp();
 
-            await interaction.update({ 
-                embeds: [embed], 
-                components: [] 
+            if (completeResult.levelUp) {
+                completeEmbed.addFields({
+                    name: '🎉 ¡Subiste de Nivel!',
+                    value: `¡Ahora eres nivel ${player.level}!`,
+                    inline: false
+                });
+            }
+
+            await interaction.editReply({ 
+                embeds: [questEmbed, completeEmbed] 
             });
-            
-            console.log(`❌ Quest failed for ${interaction.user.tag}`.red);
-        }
-    },
-};
 
-function getFailureTip(difficulty) {
-    const tips = {
-        'easy': 'Try gathering better equipment or leveling up a bit more!',
-        'medium': 'Consider upgrading your gear or trying with a party!',
-        'hard': 'This is a tough challenge! Make sure you\'re fully prepared.',
-        'expert': 'Only the most powerful adventurers can complete these quests!'
-    };
-    return tips[difficulty] || 'Keep training and try again!';
-}
+        } catch (error) {
+            console.error('Error in startQuest button:', error);
+            await interaction.editReply({
+                content: '❌ Ocurrió un error al iniciar la misión. Por favor, intenta nuevamente.',
+                ephemeral: true
+            });
+        }
+    }
+};
