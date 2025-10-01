@@ -1,7 +1,8 @@
-const { Player } = require('../models/Player');
-const { Battle } = require('../models/Battle');
-const { Quest } = require('../models/Quest');
-const { ShopItem } = require('../models/ShopItem');
+const mongoose = require('mongoose');
+const Player = require('../models/Player');
+const Battle = require('../models/Battle');
+const Quest = require('../models/Quest');
+const ShopItem = require('../models/ShopItem');
 
 class RPGUtils {
     static async createCharacter(userId, username, className = 'warrior') {
@@ -39,7 +40,9 @@ class RPGUtils {
                 exp: 0,
                 maxExp: 100,
                 evolution: 'Squire',
-                skills: ['Power Strike', 'Taunt']
+                skills: ['Power Strike', 'Taunt'],
+                currentHp: 100,
+                currentMp: 30
             },
             mage: {
                 hp: 80,
@@ -55,7 +58,9 @@ class RPGUtils {
                 exp: 0,
                 maxExp: 100,
                 evolution: 'Apprentice',
-                skills: ['Fireball', 'Heal']
+                skills: ['Fireball', 'Heal'],
+                currentHp: 80,
+                currentMp: 50
             },
             rogue: {
                 hp: 90,
@@ -71,7 +76,9 @@ class RPGUtils {
                 exp: 0,
                 maxExp: 100,
                 evolution: 'Scout',
-                skills: ['Backstab', 'Dodge']
+                skills: ['Backstab', 'Dodge'],
+                currentHp: 90,
+                currentMp: 25
             }
         };
 
@@ -81,11 +88,13 @@ class RPGUtils {
     static async addExperience(player, exp) {
         try {
             player.exp += exp;
+            let leveledUp = false;
             
             while (player.exp >= player.maxExp) {
                 player.exp -= player.maxExp;
                 player.level += 1;
                 player.maxExp = Math.floor(player.maxExp * 1.5);
+                leveledUp = true;
                 
                 // Mejorar estadísticas al subir de nivel
                 this.levelUpStats(player);
@@ -95,7 +104,7 @@ class RPGUtils {
             }
             
             await player.save();
-            return player;
+            return { player, leveledUp };
         } catch (error) {
             console.error('Error adding experience:', error);
             throw error;
@@ -144,10 +153,10 @@ class RPGUtils {
         Object.keys(increases).forEach(stat => {
             if (stat.includes('max')) {
                 const baseStat = stat.replace('max', '').toLowerCase();
-                player[stat] += increases[stat];
+                player[stat] = Math.floor(player[stat] + increases[stat]);
                 player[baseStat] = player[stat]; // Restaurar estadística actual
             } else {
-                player[stat] += increases[stat];
+                player[stat] = Math.floor(player[stat] + increases[stat]);
             }
         });
     }
@@ -176,11 +185,10 @@ class RPGUtils {
             const reward = questRewards[questDifficulty] || questRewards.easy;
             
             // Añadir experiencia
-            await this.addExperience(player, reward.exp);
+            const expResult = await this.addExperience(player, reward.exp);
             
             // Añadir oro
-            if (!player.gold) player.gold = 0;
-            player.gold += reward.gold;
+            player.gold = (player.gold || 0) + reward.gold;
             
             // Incrementar contador de misiones completadas
             player.questsCompleted = (player.questsCompleted || 0) + 1;
@@ -191,7 +199,7 @@ class RPGUtils {
                 success: true,
                 exp: reward.exp,
                 gold: reward.gold,
-                levelUp: player.exp === 0 // Si exp es 0, significa que subió de nivel
+                levelUp: expResult.leveledUp
             };
         } catch (error) {
             console.error('Error completing quest:', error);
@@ -201,10 +209,10 @@ class RPGUtils {
 
     static calculateDamage(attacker, defender, isSpecial = false) {
         const baseDamage = isSpecial ? 
-            attacker.attack * 1.5 + attacker.magic : 
+            attacker.attack * 1.5 + (attacker.magic || 0) : 
             attacker.attack;
         
-        const defenseReduction = defender.defense * 0.3;
+        const defenseReduction = (defender.defense || 0) * 0.3;
         let damage = Math.max(1, baseDamage - defenseReduction);
         
         // Añadir variación aleatoria (±20%)
@@ -216,11 +224,16 @@ class RPGUtils {
 
     static async createBattle(playerId, enemyType = 'monster') {
         try {
+            const player = await Player.findById(playerId);
+            if (!player) {
+                throw new Error('Player not found');
+            }
+
             const enemy = this.generateEnemy(enemyType);
             
             const battle = new Battle({
                 playerId,
-                player: await Player.findById(playerId),
+                player: player.toObject(),
                 enemy,
                 type: enemyType
             });
@@ -255,13 +268,15 @@ class RPGUtils {
     static async handleBattleVictory(playerId, battle) {
         try {
             const player = await Player.findById(playerId);
+            if (!player) {
+                throw new Error('Player not found');
+            }
             
             // Añadir experiencia
-            await this.addExperience(player, battle.enemy.exp);
+            const expResult = await this.addExperience(player, battle.enemy.exp);
             
             // Añadir oro
-            if (!player.gold) player.gold = 0;
-            player.gold += battle.enemy.gold;
+            player.gold = (player.gold || 0) + battle.enemy.gold;
             
             // Incrementar contador de monstruos derrotados
             player.monstersDefeated = (player.monstersDefeated || 0) + 1;
@@ -272,7 +287,8 @@ class RPGUtils {
                 success: true,
                 exp: battle.enemy.exp,
                 gold: battle.enemy.gold,
-                player: player
+                player: player,
+                leveledUp: expResult.leveledUp
             };
         } catch (error) {
             console.error('Error handling battle victory:', error);
