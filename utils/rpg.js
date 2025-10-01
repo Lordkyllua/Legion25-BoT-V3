@@ -88,3 +88,11 @@ async function addExperience(userId, exp, interaction = null) {
     
     return result;
 }
+module.exports = {
+    createCharacter,
+    addExperience,
+    getCharacter,
+    calculateBattleRewards,
+    completeQuest,
+    showLevelUpMessage
+};
