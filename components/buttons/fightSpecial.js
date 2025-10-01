@@ -1,8 +1,8 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const { addExperience } = require('../../utils/rpg');
-const { addGold } = require('../../utils/gold');
-const User = require('../../models/User');
-const { calculateDamage, createBattleEmbed } = require('../../commands/fight');
+const { addExperience } = require('../../../utils/rpg'); // Ruta corregida
+const { addGold } = require('../../../utils/gold'); // Ruta corregida
+const User = require('../../../models/User'); // Ruta corregida
+const { calculateDamage, createBattleEmbed } = require('../../../commands/fight'); // Ruta corregida
 
 module.exports = {
     customId: 'fight_special_',
@@ -109,7 +109,9 @@ async function handleVictory(interaction, player, enemy, type, battleLog) {
     const goldReward = type === 'boss' ? enemy.gold * 3 : enemy.gold;
     
     try {
-        // Add rewards - CORREGIDO: pasar la interacción
+        console.log(`🎯 Victory rewards: ${expReward} EXP, ${goldReward} Gold`);
+        
+        // Add rewards
         const levelUpResult = await addExperience(userId, expReward, interaction);
         await addGold(userId, goldReward);
         
