@@ -1,63 +1,92 @@
-const { EmbedBuilder } = require('discord.js');
-const { createCharacter } = require('../../utils/rpg');
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require('discord.js');
+const Player = require('../../models/Player');
+const RPGUtils = require('../../utils/rpg');
 
 module.exports = {
-    customId: 'rpg_class_selection',
+    data: { name: 'rpg_class_selection' },
+    
     async execute(interaction) {
-        const selectedClass = interaction.values[0];
-        
         try {
-            // Create character
-            const character = await createCharacter(interaction.user.id, selectedClass);
-            
+            await interaction.deferReply({ ephemeral: true });
+
+            const selectedClass = interaction.values[0];
+            const userId = interaction.user.id;
+
+            // Verificar si el jugador ya existe
+            const existingPlayer = await Player.findOne({ userId });
+            if (existingPlayer) {
+                return await interaction.editReply({
+                    content: '❌ Ya tienes un personaje creado. Usa `/resetcharacter` si quieres crear uno nuevo.',
+                    ephemeral: true
+                });
+            }
+
+            // Crear personaje con la clase seleccionada
+            const player = await RPGUtils.createCharacter(userId, interaction.user.username, selectedClass);
+
             const classInfo = {
-                mage: {
-                    color: 0x9B59B6,
-                    description: 'Master of arcane arts, wielding powerful spells that can change the course of battles.',
-                    special: 'High Magic Power',
-                    abilities: 'Fireball, Magic Shield, Teleport'
-                },
                 warrior: {
-                    color: 0xE74C3C,
-                    description: 'Mighty champion with unmatched strength and resilience on the battlefield.',
-                    special: 'High Defense & HP',
-                    abilities: 'Power Strike, Taunt, Shield Bash'
+                    description: 'Un guerrero fuerte y resistente, especializado en combate cuerpo a cuerpo.',
+                    strengths: 'Alta fuerza y defensa, mucho HP'
                 },
-                archer: {
-                    color: 0x27AE60,
-                    description: 'Deadly precision and unmatched agility, striking from distances with perfect accuracy.',
-                    special: 'High Agility & Critical',
-                    abilities: 'Quick Shot, Dodge, Multi-shot'
+                mage: {
+                    description: 'Un mago poderoso que domina las artes arcanas.',
+                    strengths: 'Alta magia y MP, hechizos poderosos'
+                },
+                rogue: {
+                    description: 'Un sigiloso ladrón experto en ataques rápidos y evasión.',
+                    strengths: 'Alta agilidad y ataque, críticos frecuentes'
                 }
             };
 
-            const info = classInfo[selectedClass];
+            const info = classInfo[selectedClass] || classInfo.warrior;
 
             const embed = new EmbedBuilder()
-                .setTitle(`🎉 Welcome, ${interaction.user.username}!`)
-                .setDescription(`**You have chosen the path of the ${selectedClass.charAt(0).toUpperCase() + selectedClass.slice(1)}!**\n\n${info.description}`)
-                .setColor(info.color)
-                .setThumbnail(interaction.user.displayAvatarURL())
+                .setTitle(`🎮 ¡Personaje ${selectedClass.charAt(0).toUpperCase() + selectedClass.slice(1)} Creado!`)
+                .setDescription(`¡Bienvenido al mundo RPG, ${interaction.user.username}!`)
                 .addFields(
-                    { name: '⭐ Starting Level', value: 'Level 1', inline: true },
-                    { name: '💰 Starting Gold', value: '🪙 50', inline: true },
-                    { name: '🎯 Specialization', value: info.special, inline: true },
-                    { name: '📚 Starting Abilities', value: info.abilities, inline: true },
-                    { name: '❤️ Base HP', value: character.maxHp.toString(), inline: true },
-                    { name: '💙 Base MP', value: character.maxMp.toString(), inline: true },
-                    { name: '⚔️ Base Attack', value: character.attack.toString(), inline: true },
-                    { name: '🛡️ Base Defense', value: character.defense.toString(), inline: true }
+                    { name: '👤 Clase', value: selectedClass, inline: true },
+                    { name: '⭐ Nivel', value: '1', inline: true },
+                    { name: '🏆 Evolución', value: player.evolution, inline: true },
+                    { name: '📖 Descripción', value: info.description, inline: false },
+                    { name: '💪 Fortalezas', value: info.strengths, inline: false },
+                    { name: '❤️ HP', value: `${player.hp}`, inline: true },
+                    { name: '🔵 MP', value: `${player.mp}`, inline: true },
+                    { name: '⚔️ Ataque', value: `${player.attack}`, inline: true },
+                    { name: '🛡️ Defensa', value: `${player.defense}`, inline: true },
+                    { name: '🔮 Magia', value: `${player.magic}`, inline: true },
+                    { name: '⚡ Agilidad', value: `${player.agility}`, inline: true },
+                    { name: '💪 Fuerza', value: `${player.strength}`, inline: true }
                 )
-                .setFooter({ text: 'Your adventure begins now! Use /rpg to check your status.' });
+                .setColor(0x0099FF)
+                .setTimestamp();
 
-            await interaction.update({ embeds: [embed], components: [] });
+            const buttons = new ActionRowBuilder().addComponents(
+                new ButtonBuilder()
+                    .setCustomId('rpg_inventory')
+                    .setLabel('🎒 Ver Inventario')
+                    .setStyle(ButtonStyle.Primary),
+                new ButtonBuilder()
+                    .setCustomId('rpg_skills')
+                    .setLabel('✨ Ver Habilidades')
+                    .setStyle(ButtonStyle.Success),
+                new ButtonBuilder()
+                    .setCustomId('rpg_quests')
+                    .setLabel('🏹 Ir de Misiones')
+                    .setStyle(ButtonStyle.Secondary)
+            );
+
+            await interaction.editReply({
+                embeds: [embed],
+                components: [buttons]
+            });
 
         } catch (error) {
-            console.error('Error in class selection:', error);
-            await interaction.reply({ 
-                content: 'An error occurred while creating your character. Please try again.', 
-                ephemeral: true 
+            console.error('Error in rpg class selection:', error);
+            await interaction.editReply({
+                content: '❌ Ocurrió un error al crear tu personaje. Por favor, intenta nuevamente.',
+                ephemeral: true
             });
         }
-    },
+    }
 };
