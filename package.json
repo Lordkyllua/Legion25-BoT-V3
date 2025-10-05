@@ -1,7 +1,7 @@
 {
-  "name": "legion25-bot",
-  "version": "3.0.0",
-  "description": "An advanced Discord RPG bot with MongoDB database inspired by Micro Hunter",
+  "name": "micro-hunter-rpg-bot",
+  "version": "1.0.0",
+  "description": "A powerful RPG Discord bot inspired by Micro Hunter",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
@@ -9,16 +9,17 @@
   },
   "dependencies": {
     "discord.js": "^14.14.1",
-    "axios": "^1.6.0",
-    "colors": "^1.4.0",
-    "mongodb": "^6.3.0"
+    "mongoose": "^8.0.3",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
   },
   "keywords": [
     "discord",
-    "bot",
     "rpg",
-    "microhunter",
-    "mongodb",
+    "bot",
+    "micro-hunter",
     "gaming"
   ],
   "author": "LordK",
