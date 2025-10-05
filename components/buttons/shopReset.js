@@ -11,7 +11,8 @@ const defaultItems = [
         levelRequirement: 1,
         price: 50,
         damage: 5,
-        strength: 2
+        strength: 2,
+        sellPrice: 10
     },
     {
         itemId: 'apprentice_robe',
@@ -22,7 +23,8 @@ const defaultItems = [
         levelRequirement: 1,
         price: 40,
         defense: 3,
-        intelligence: 2
+        intelligence: 2,
+        sellPrice: 8
     },
     {
         itemId: 'health_potion',
@@ -33,7 +35,9 @@ const defaultItems = [
         levelRequirement: 1,
         price: 25,
         health: 50,
-        consumable: true
+        consumable: true,
+        stackable: true,
+        sellPrice: 5
     },
     {
         itemId: 'mana_potion',
@@ -44,7 +48,9 @@ const defaultItems = [
         levelRequirement: 1,
         price: 20,
         mana: 30,
-        consumable: true
+        consumable: true,
+        stackable: true,
+        sellPrice: 4
     }
 ];
 
@@ -60,7 +66,8 @@ const advancedItems = [
         price: 5000,
         damage: 50,
         strength: 15,
-        criticalChance: 10
+        criticalChance: 10,
+        sellPrice: 1000
     },
     {
         itemId: 'archmage_staff',
@@ -73,7 +80,8 @@ const advancedItems = [
         price: 4800,
         damage: 40,
         intelligence: 20,
-        mana: 30
+        mana: 30,
+        sellPrice: 960
     },
     {
         itemId: 'phoenix_bow',
@@ -86,7 +94,8 @@ const advancedItems = [
         price: 4600,
         damage: 45,
         agility: 18,
-        criticalChance: 15
+        criticalChance: 15,
+        sellPrice: 920
     },
     {
         itemId: 'elixir_of_life',
@@ -98,12 +107,14 @@ const advancedItems = [
         price: 500,
         health: 999,
         mana: 999,
-        consumable: true
+        consumable: true,
+        stackable: true,
+        sellPrice: 100
     }
 ];
 
 module.exports = {
-    name: 'reset_shop_',
+    name: 'reset_shop',
     
     async execute(interaction) {
         const action = interaction.customId.replace('reset_shop_', '');
