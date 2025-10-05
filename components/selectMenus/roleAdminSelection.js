@@ -1,24 +1,32 @@
-const fs = require('fs');
+const { EmbedBuilder } = require('discord.js');
 
 module.exports = {
-    customId: 'role_admin_selection',
+    name: 'role_admin_selection',
+    
     async execute(interaction) {
-        const selectedRoleIds = interaction.values;
+        const selectedRoleId = interaction.values[0];
+        const role = await interaction.guild.roles.fetch(selectedRoleId);
         
-        const rolesConfig = {
-            selectableRoles: selectedRoleIds
-        };
+        if (!role) {
+            return await interaction.reply({ 
+                content: '❌ Role not found!', 
+                ephemeral: true 
+            });
+        }
 
-        fs.writeFileSync('./utils/rolesConfig.json', JSON.stringify(rolesConfig, null, 2));
+        const embed = new EmbedBuilder()
+            .setTitle('🎭 Role Information')
+            .setColor(role.color)
+            .addFields(
+                { name: 'Role Name', value: role.name, inline: true },
+                { name: 'Role ID', value: role.id, inline: true },
+                { name: 'Color', value: role.hexColor, inline: true },
+                { name: 'Members', value: `${role.members.size} members`, inline: true },
+                { name: 'Position', value: `${role.position}`, inline: true },
+                { name: 'Created', value: `<t:${Math.floor(role.createdTimestamp / 1000)}:R>`, inline: true }
+            )
+            .setFooter({ text: 'Role management' });
 
-        const roleNames = selectedRoleIds.map(roleId => {
-            const role = interaction.guild.roles.cache.get(roleId);
-            return role?.name || 'Unknown Role';
-        });
-
-        await interaction.reply({ 
-            content: `✅ Selectable roles updated! Users can now choose from: ${roleNames.join(', ') || 'no roles'}`,
-            ephemeral: true 
-        });
-    },
+        await interaction.reply({ embeds: [embed], ephemeral: true });
+    }
 };
