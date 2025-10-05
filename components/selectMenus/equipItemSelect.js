@@ -1,67 +1,73 @@
 const { EmbedBuilder } = require('discord.js');
 const User = require('../../models/User');
+const Item = require('../../models/Item');
 
 module.exports = {
-    customId: 'equip_item_select',
+    name: 'equip_item_select',
+    
     async execute(interaction) {
-        const selectedValue = interaction.values[0];
-        const itemId = parseInt(selectedValue.replace('equip_', ''));
-        const userId = interaction.user.id;
+        const itemId = interaction.values[0];
+        const user = await User.findOne({ userId: interaction.user.id, guildId: interaction.guild.id });
+        
+        if (!user) return;
 
-        try {
-            const user = await User.findById(userId);
-            if (!user || !user.rpg) {
-                await interaction.reply({ 
-                    content: 'Character not found!', 
-                    ephemeral: true 
-                });
-                return;
-            }
-
-            const inventory = user.rpg.inventory;
-            const item = inventory.find(i => i.id === itemId);
-            
-            if (!item) {
-                await interaction.reply({ 
-                    content: 'Item not found in your inventory!', 
-                    ephemeral: true 
-                });
-                return;
-            }
-
-            // Equipar el item en el slot correcto
-            const equipped = user.rpg.equipped || {};
-            const slot = item.type; // weapon, armor, accessory
-
-            // Verificar si ya está equipado
-            const isEquipped = equipped[slot]?.id === itemId;
-            
-            if (isEquipped) {
-                // Desequipar
-                equipped[slot] = null;
-                await interaction.reply({ 
-                    content: `✅ **${item.name}** has been unequipped.`,
-                    ephemeral: true 
-                });
-            } else {
-                // Equipar
-                equipped[slot] = item;
-                await interaction.reply({ 
-                    content: `✅ **${item.name}** has been equipped!`,
-                    ephemeral: true 
-                });
-            }
-
-            // Actualizar en la base de datos
-            user.rpg.equipped = equipped;
-            await User.updateRPG(userId, user.rpg);
-
-        } catch (error) {
-            console.error('Error equipping item:', error);
-            await interaction.reply({ 
-                content: 'There was an error equipping the item.', 
+        const item = await Item.findOne({ itemId: itemId });
+        if (!item) {
+            return await interaction.reply({ 
+                content: '❌ Item not found!', 
                 ephemeral: true 
             });
         }
-    },
+
+        // Check requirements
+        if (user.level < item.levelRequirement) {
+            return await interaction.reply({ 
+                content: `❌ You need level ${item.levelRequirement} to equip this item!`, 
+                ephemeral: true 
+            });
+        }
+
+        if (item.classRequirement && user.class.toLowerCase() !== item.classRequirement.toLowerCase()) {
+            return await interaction.reply({ 
+                content: `❌ This item is only for ${item.classRequirement} class!`, 
+                ephemeral: true 
+            });
+        }
+
+        // Equip item
+        const inventoryItem = user.inventory.find(inv => inv.itemId === itemId);
+        if (!inventoryItem) {
+            return await interaction.reply({ 
+                content: '❌ Item not found in your inventory!', 
+                ephemeral: true 
+            });
+        }
+
+        // Unequip current item of same type
+        user.inventory.forEach(inv => {
+            if (inv.equipped) {
+                const equippedItem = user.inventory.find(i => i.itemId === inv.itemId);
+                if (equippedItem) {
+                    equippedItem.equipped = false;
+                }
+            }
+        });
+
+        inventoryItem.equipped = true;
+        user.equipment[item.type] = itemId;
+
+        await user.save();
+
+        const embed = new EmbedBuilder()
+            .setTitle('✅ Item Equipped!')
+            .setColor(0x2ECC71)
+            .addFields(
+                { name: '🛡️ Item', value: item.name, inline: true },
+                { name: '🎯 Type', value: item.type, inline: true },
+                { name: '⭐ Rarity', value: item.rarity, inline: true }
+            )
+            .setFooter({ text: 'Item stats are now active' });
+
+        await interaction.reply({ embeds: [embed], ephemeral: true });
+    }
 };
