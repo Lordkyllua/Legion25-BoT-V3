@@ -1,102 +1,66 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const Shop = require('../../models/Shop');
-const User = require('../../models/User');
+const Item = require('../../models/Item');
 
 module.exports = {
-    customId: 'shop_category',
+    name: 'shop_category',
+    
     async execute(interaction) {
         const category = interaction.values[0];
-        const userId = interaction.user.id;
-        const user = await User.findById(userId);
-        const userClass = user?.rpg?.class;
         
-        try {
-            let categoryItems = await Shop.getItemsByCategory(category);
+        let items;
+        if (category === 'all') {
+            items = await Item.find().limit(20);
+        } else {
+            items = await Item.find({ type: category }).limit(20);
+        }
 
-            if (categoryItems.length === 0) {
-                return await interaction.update({ 
-                    content: `No items found in the ${category} category.`, 
-                    components: [] 
-                });
-            }
-
-            // Filtrar items por clase del usuario si es necesario
-            if (userClass && category !== 'potion' && category !== 'consumable') {
-                // Para armas y armaduras, mostrar items de la clase del usuario + items para todas las clases
-                categoryItems = categoryItems.filter(item => 
-                    item.class === userClass || item.class === 'all'
-                );
-            }
-
-            if (categoryItems.length === 0) {
-                return await interaction.update({ 
-                    content: `No ${category} items available for your class (${userClass}).`, 
-                    components: [] 
-                });
-            }
-
-            const embed = new EmbedBuilder()
-                .setTitle(`🛒 ${category.charAt(0).toUpperCase() + category.slice(1)} Items`)
-                .setColor(0x27AE60)
-                .setDescription(`Available ${category} items${userClass ? ` for ${userClass}` : ''}:`)
-                .setFooter({ text: 'Use /buy <item_id> to purchase an item' });
-
-            // Mostrar items con información de clase y nivel
-            const displayItems = categoryItems.slice(0, 8); // Limitar a 8 items
-            
-            displayItems.forEach(item => {
-                const classInfo = item.class !== 'all' ? ` | Class: ${item.class}` : '';
-                const levelInfo = item.level > 1 ? ` | Level: ${item.level}` : '';
-                const rarityEmoji = getRarityEmoji(item.rarity);
-                
-                embed.addFields({
-                    name: `${rarityEmoji} ${item.name} (ID: ${item.id}) - 🪙 ${item.price}`,
-                    value: `${item.description}${classInfo}${levelInfo}`,
-                    inline: false
-                });
-            });
-
-            if (categoryItems.length > 8) {
-                embed.addFields({
-                    name: '📋 Category Info',
-                    value: `Showing 8 of ${categoryItems.length} items. Use "Show All Classes" to see everything.`,
-                    inline: false
-                });
-            }
-
-            const buyButton = new ButtonBuilder()
-                .setCustomId('buy_item_info')
-                .setLabel('How to Buy')
-                .setStyle(ButtonStyle.Success)
-                .setEmoji('💰');
-
-            const classButton = new ButtonBuilder()
-                .setCustomId('shop_other_classes')
-                .setLabel('Show All Classes')
-                .setStyle(ButtonStyle.Secondary)
-                .setEmoji('👥');
-
-            const row = new ActionRowBuilder().addComponents(buyButton, classButton);
-
-            await interaction.update({ embeds: [embed], components: [row] });
-
-        } catch (error) {
-            console.error('Error in shop category:', error);
-            await interaction.reply({ 
-                content: 'An error occurred while loading items.', 
+        if (items.length === 0) {
+            return await interaction.reply({ 
+                content: '❌ No items found in this category!', 
                 ephemeral: true 
             });
         }
-    },
+
+        const embed = new EmbedBuilder()
+            .setTitle(`🛒 ${category.charAt(0).toUpperCase() + category.slice(1)} Items`)
+            .setColor(0x2ECC71)
+            .setDescription(`Showing ${items.length} items`);
+
+        items.forEach(item => {
+            embed.addFields({
+                name: `${getItemEmoji(item.type)} ${item.name} [${item.itemId}]`,
+                value: `💰 ${item.price} Gold | 📊 Level ${item.levelRequirement} | ⭐ ${item.rarity}`,
+                inline: false
+            });
+        });
+
+        const row = new ActionRowBuilder()
+            .addComponents(
+                new ButtonBuilder()
+                    .setCustomId('shop_weapons')
+                    .setLabel('Weapons')
+                    .setStyle(ButtonStyle.Primary),
+                new ButtonBuilder()
+                    .setCustomId('shop_armor')
+                    .setLabel('Armor')
+                    .setStyle(ButtonStyle.Success),
+                new ButtonBuilder()
+                    .setCustomId('shop_potions')
+                    .setLabel('Potions')
+                    .setStyle(ButtonStyle.Danger)
+            );
+
+        await interaction.update({ embeds: [embed], components: [row] });
+    }
 };
 
-function getRarityEmoji(rarity) {
+function getItemEmoji(type) {
     const emojis = {
-        common: '⚪',
-        uncommon: '🟢',
-        rare: '🔵',
-        epic: '🟣',
-        legendary: '🟡'
+        weapon: '⚔️',
+        armor: '🛡️',
+        potion: '🧪',
+        accessory: '💎',
+        material: '📦'
     };
-    return emojis[rarity] || '⚪';
+    return emojis[type] || '📦';
 }
