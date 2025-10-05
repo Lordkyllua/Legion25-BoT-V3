@@ -1,19 +1,16 @@
 {
   "name": "micro-hunter-rpg-bot",
   "version": "2.0.0",
-  "description": "A powerful RPG Discord bot inspired by Micro Hunter with admin reset features",
+  "description": "Micro Hunter RPG Discord Bot - Hosted on Railway",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "init-items": "node scripts/initializeItems.js",
-    "reset-shop": "node scripts/initializeItems.js",
-    "test": "echo \"No tests specified\" && exit 0"
+    "init-items": "node scripts/initializeItems.js"
   },
   "dependencies": {
     "discord.js": "^14.14.1",
-    "mongoose": "^8.0.3",
-    "dotenv": "^16.3.1"
+    "mongoose": "^8.0.3"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"
@@ -23,18 +20,11 @@
     "rpg",
     "bot",
     "micro-hunter",
-    "gaming",
-    "admin",
-    "reset",
-    "mongodb"
+    "railway"
   ],
   "author": "LordK",
   "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/your-username/micro-hunter-bot"
-  },
   "engines": {
-    "node": ">=16.9.0"
+    "node": ">=18.0.0"
   }
 }
