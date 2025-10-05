@@ -1,96 +1,132 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const User = require('../models/User');
-const Gold = require('../models/Gold');
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('ranking')
-        .setDescription('Display gold and level ranking leaderboards')
+        .setDescription('View the server leaderboards')
         .addStringOption(option =>
-            option.setName('type')
-                .setDescription('Type of ranking to display')
-                .setRequired(false)
+            option.setName('category')
+                .setDescription('Ranking category')
                 .addChoices(
+                    { name: 'Level', value: 'level' },
                     { name: 'Gold', value: 'gold' },
-                    { name: 'Level', value: 'level' }
+                    { name: 'Monsters Defeated', value: 'monsters' },
+                    { name: 'Bosses Defeated', value: 'bosses' }
                 )),
+    
     async execute(interaction) {
-        const rankingType = interaction.options.getString('type') || 'gold';
+        const category = interaction.options.getString('category') || 'level';
+        
+        let sortCriteria = {};
+        let title = '';
+        let emoji = '';
 
-        if (rankingType === 'gold') {
-            await showGoldRanking(interaction);
-        } else {
-            await showLevelRanking(interaction);
+        switch (category) {
+            case 'level':
+                sortCriteria = { level: -1, exp: -1 };
+                title = 'Level Ranking';
+                emoji = '📊';
+                break;
+            case 'gold':
+                sortCriteria = { gold: -1 };
+                title = 'Wealth Ranking';
+                emoji = '💰';
+                break;
+            case 'monsters':
+                sortCriteria = { monstersDefeated: -1 };
+                title = 'Monster Slayer Ranking';
+                emoji = '⚔️';
+                break;
+            case 'bosses':
+                sortCriteria = { bossesDefeated: -1 };
+                title = 'Boss Slayer Ranking';
+                emoji = '👑';
+                break;
         }
-    },
+
+        const users = await User.find({ guildId: interaction.guild.id })
+            .sort(sortCriteria)
+            .limit(10);
+
+        if (users.length === 0) {
+            return await interaction.reply({ 
+                content: '❌ No players found on this server! Use `/rpg start` to begin your journey.', 
+                ephemeral: true 
+            });
+        }
+
+        const embed = new EmbedBuilder()
+            .setTitle(`${emoji} ${title}`)
+            .setColor(0xE91E63)
+            .setDescription(`Top 10 players in ${interaction.guild.name}`)
+            .setFooter({ text: 'Micro Hunter RPG - Developed by LordK' });
+
+        users.forEach((user, index) => {
+            let value = '';
+            let rankEmoji = getRankEmoji(index + 1);
+
+            switch (category) {
+                case 'level':
+                    value = `Level ${user.level} • ${user.exp} XP • ${user.class}`;
+                    break;
+                case 'gold':
+                    value = `${user.gold} Gold • Level ${user.level} • ${user.class}`;
+                    break;
+                case 'monsters':
+                    value = `${user.monstersDefeated} Monsters • Level ${user.level} • ${user.class}`;
+                    break;
+                case 'bosses':
+                    value = `${user.bossesDefeated} Bosses • Level ${user.level} • ${user.class}`;
+                    break;
+            }
+
+            embed.addFields({
+                name: `${rankEmoji} ${user.username}`,
+                value: value,
+                inline: false
+            });
+        });
+
+        // Add current user's position if not in top 10
+        const allUsers = await User.find({ guildId: interaction.guild.id }).sort(sortCriteria);
+        const userIndex = allUsers.findIndex(u => u.userId === interaction.user.id);
+        
+        if (userIndex >= 10) {
+            const user = allUsers[userIndex];
+            let userValue = '';
+            
+            switch (category) {
+                case 'level':
+                    userValue = `Level ${user.level} • ${user.exp} XP`;
+                    break;
+                case 'gold':
+                    userValue = `${user.gold} Gold`;
+                    break;
+                case 'monsters':
+                    userValue = `${user.monstersDefeated} Monsters`;
+                    break;
+                case 'bosses':
+                    userValue = `${user.bossesDefeated} Bosses`;
+                    break;
+            }
+
+            embed.addFields({
+                name: `📌 Your Position (#${userIndex + 1})`,
+                value: userValue,
+                inline: false
+            });
+        }
+
+        await interaction.reply({ embeds: [embed] });
+    }
 };
 
-async function showGoldRanking(interaction) {
-    const topRich = await Gold.getTopRich(10);
-    
-    const embed = new EmbedBuilder()
-        .setTitle('🏆 Gold Ranking Leaderboard')
-        .setColor(0xFFD700)
-        .setDescription('Top 10 wealthiest adventurers:')
-        .setThumbnail('https://i.imgur.com/VjziJqU.png')
-        .setFooter({ text: 'Earn gold through quests, battles, and games!' });
-
-    for (let i = 0; i < topRich.length; i++) {
-        const record = topRich[i];
-        try {
-            const user = await interaction.client.users.fetch(record.userId);
-            const userData = await User.findById(record.userId);
-            const className = userData && userData.rpg ? userData.rpg.class : 'Adventurer';
-            const level = userData && userData.rpg ? userData.rpg.level : 1;
-            
-            embed.addFields({
-                name: `#${i + 1} ${user.username}`,
-                value: `🪙 ${record.amount} Gold | ${className} Lv.${level}`,
-                inline: false
-            });
-        } catch (error) {
-            // Skip users that can't be fetched
-            continue;
-        }
+function getRankEmoji(rank) {
+    switch (rank) {
+        case 1: return '🥇';
+        case 2: return '🥈';
+        case 3: return '🥉';
+        default: return `**${rank}.**`;
     }
-
-    if (topRich.length === 0) {
-        embed.setDescription('No one has any gold yet! Be the first to earn some!');
-    }
-
-    await interaction.reply({ embeds: [embed] });
-}
-
-async function showLevelRanking(interaction) {
-    const topPlayers = await User.getTopPlayers(10);
-    
-    const embed = new EmbedBuilder()
-        .setTitle('⭐ Level Ranking Leaderboard')
-        .setColor(0x3498DB)
-        .setDescription('Top 10 most powerful adventurers:')
-        .setThumbnail('https://i.imgur.com/xRk7Qq3.png')
-        .setFooter({ text: 'Gain experience through quests and battles!' });
-
-    for (let i = 0; i < topPlayers.length; i++) {
-        const userData = topPlayers[i];
-        try {
-            const user = await interaction.client.users.fetch(userData.userId);
-            const rpg = userData.rpg;
-            
-            embed.addFields({
-                name: `#${i + 1} ${user.username}`,
-                value: `Level ${rpg.level} ${rpg.class} | ${rpg.exp}/${rpg.maxExp} EXP`,
-                inline: false
-            });
-        } catch (error) {
-            // Skip users that can't be fetched
-            continue;
-        }
-    }
-
-    if (topPlayers.length === 0) {
-        embed.setDescription('No players have started their RPG journey yet! Use `/rpg` to begin!');
-    }
-
-    await interaction.reply({ embeds: [embed] });
 }
