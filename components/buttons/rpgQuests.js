@@ -2,101 +2,29 @@ const { EmbedBuilder } = require('discord.js');
 const User = require('../../models/User');
 
 module.exports = {
-    customId: 'rpg_quests',
+    name: 'rpg_quests',
+    
     async execute(interaction) {
-        const userId = interaction.user.id;
-        const user = await User.findById(userId);
-
-        if (!user || !user.rpg) {
-            await interaction.reply({ 
-                content: 'You need to create a character first! Use `/rpg` to get started.', 
+        const user = await User.findOne({ userId: interaction.user.id, guildId: interaction.guild.id });
+        
+        if (!user) {
+            return await interaction.reply({ 
+                content: '❌ You need to start your RPG journey first!', 
                 ephemeral: true 
             });
-            return;
         }
 
-        const rpg = user.rpg;
-        
         const embed = new EmbedBuilder()
-            .setTitle(`🏹 ${interaction.user.username}'s Quest Log`)
+            .setTitle('📜 Quest Journal')
             .setColor(0xF39C12)
-            .setDescription('Your adventure progress and achievements')
             .addFields(
-                { 
-                    name: '📊 Quest Statistics', 
-                    value: `✅ Quests Completed: ${rpg.questsCompleted || 0}\n🐉 Monsters Defeated: ${rpg.monstersDefeated || 0}`,
-                    inline: true 
-                },
-                { 
-                    name: '⭐ Adventure Level', 
-                    value: `Level ${rpg.level}\nEXP: ${rpg.exp}/${rpg.maxExp}`,
-                    inline: true 
-                },
-                { 
-                    name: '🎯 Class & Evolution', 
-                    value: `${rpg.evolution} ${rpg.class.charAt(0).toUpperCase() + rpg.class.slice(1)}`,
-                    inline: true 
-                }
+                { name: '🎯 Active Quest', value: user.activeQuest || 'None', inline: true },
+                { name: '📊 Progress', value: user.questProgress ? `${user.questProgress}%` : '0%', inline: true },
+                { name: '📅 Daily Quests', value: `${user.dailyQuests}/3 completed`, inline: true },
+                { name: '🏆 Achievements', value: `Monsters: ${user.monstersDefeated}\nBosses: ${user.bossesDefeated}`, inline: false }
             )
-            .setFooter({ text: 'Use /quest to start a new adventure!' });
+            .setFooter({ text: 'Use /quest to start a new quest' });
 
-        // Add quest recommendations based on level
-        const recommendedQuests = getRecommendedQuests(rpg.level);
-        if (recommendedQuests.length > 0) {
-            embed.addFields({
-                name: '🎯 Recommended Quests',
-                value: recommendedQuests.map(quest => `• **${quest.name}** (${quest.difficulty}) - ${quest.reward} gold`).join('\n'),
-                inline: false
-            });
-        }
-
-        // Add achievements
-        const achievements = getAchievements(rpg);
-        if (achievements.length > 0) {
-            embed.addFields({
-                name: '🏆 Achievements',
-                value: achievements.join('\n'),
-                inline: false
-            });
-        }
-
-        await interaction.reply({ 
-            embeds: [embed], 
-            ephemeral: true 
-        });
-    },
+        await interaction.reply({ embeds: [embed], ephemeral: true });
+    }
 };
-
-function getRecommendedQuests(level) {
-    if (level < 10) {
-        return [
-            { name: 'Forest Exploration', difficulty: 'Easy', reward: 25 },
-            { name: 'Goblin Camp Raid', difficulty: 'Easy', reward: 40 }
-        ];
-    } else if (level < 25) {
-        return [
-            { name: 'Dungeon Crawl', difficulty: 'Medium', reward: 50 },
-            { name: 'Ancient Ruins', difficulty: 'Medium', reward: 75 }
-        ];
-    } else {
-        return [
-            { name: 'Dragon Hunt', difficulty: 'Hard', reward: 100 },
-            { name: 'Lich King Battle', difficulty: 'Hard', reward: 150 }
-        ];
-    }
-}
-
-function getAchievements(rpg) {
-    const achievements = [];
-    
-    if (rpg.level >= 10) achievements.push('🎖️ Level 10 Adventurer');
-    if (rpg.level >= 25) achievements.push('🏅 Level 25 Hero');
-    if (rpg.level >= 50) achievements.push('👑 Level 50 Champion');
-    if ((rpg.questsCompleted || 0) >= 10) achievements.push('📚 Quest Master');
-    if ((rpg.monstersDefeated || 0) >= 50) achievements.push('⚔️ Monster Slayer');
-    if (rpg.evolution !== 'Apprentice' && rpg.evolution !== 'Squire' && rpg.evolution !== 'Hunter') {
-        achievements.push('✨ Evolution Master');
-    }
-    
-    return achievements.length > 0 ? achievements : ['🌟 No achievements yet. Keep adventuring!'];
-}
