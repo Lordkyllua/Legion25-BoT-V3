@@ -1,78 +1,63 @@
 const { EmbedBuilder } = require('discord.js');
 const User = require('../../models/User');
+const Item = require('../../models/Item');
 
 module.exports = {
-    customId: 'use_item_select',
+    name: 'use_item_select',
+    
     async execute(interaction) {
-        const selectedValue = interaction.values[0];
-        const itemId = parseInt(selectedValue.replace('use_', ''));
-        const userId = interaction.user.id;
+        const itemId = interaction.values[0];
+        const user = await User.findOne({ userId: interaction.user.id, guildId: interaction.guild.id });
+        
+        if (!user) return;
 
-        try {
-            const user = await User.findById(userId);
-            if (!user || !user.rpg) {
-                await interaction.reply({ 
-                    content: 'Character not found!', 
-                    ephemeral: true 
-                });
-                return;
-            }
-
-            const inventory = user.rpg.inventory;
-            const itemIndex = inventory.findIndex(i => i.id === itemId);
-            
-            if (itemIndex === -1) {
-                await interaction.reply({ 
-                    content: 'Item not found in your inventory!', 
-                    ephemeral: true 
-                });
-                return;
-            }
-
-            const item = inventory[itemIndex];
-            
-            // Aplicar efectos del item
-            let effectMessage = '';
-            
-            if (item.type === 'potion') {
-                if (item.stats.hp) {
-                    user.rpg.hp = Math.min(user.rpg.maxHp, user.rpg.hp + item.stats.hp);
-                    effectMessage = `❤️ Restored ${item.stats.hp} HP!`;
-                }
-                if (item.stats.mp) {
-                    user.rpg.mp = Math.min(user.rpg.maxMp, user.rpg.mp + item.stats.mp);
-                    effectMessage += ` 💙 Restored ${item.stats.mp} MP!`;
-                }
-            }
-
-            // Remover el item del inventario
-            inventory.splice(itemIndex, 1);
-            user.rpg.inventory = inventory;
-
-            // Actualizar en la base de datos
-            await User.updateRPG(userId, user.rpg);
-
-            const embed = new EmbedBuilder()
-                .setTitle('🧪 Item Used')
-                .setColor(0x00FF00)
-                .setDescription(`You used **${item.name}**`)
-                .addFields(
-                    { name: 'Effect', value: effectMessage || 'Item effect applied', inline: true },
-                    { name: 'Remaining', value: `${inventory.length} items in inventory`, inline: true }
-                )
-                .setFooter({ text: 'Item consumed and removed from inventory' });
-
-            await interaction.reply({ 
-                embeds: [embed],
-                ephemeral: true 
-            });
-
-        } catch (error) {
-            console.error('Error using item:', error);
-            await interaction.reply({ 
-                content: 'There was an error using the item.', 
+        const item = await Item.findOne({ itemId: itemId });
+        if (!item) {
+            return await interaction.reply({ 
+                content: '❌ Item not found!', 
                 ephemeral: true 
             });
         }
-    },
+
+        const inventoryItem = user.inventory.find(inv => inv.itemId === itemId);
+        if (!inventoryItem) {
+            return await interaction.reply({ 
+                content: '❌ Item not found in your inventory!', 
+                ephemeral: true 
+            });
+        }
+
+        // Use item effects
+        let effectMessage = '';
+        
+        if (item.health) {
+            user.health = Math.min(user.maxHealth, user.health + item.health);
+            effectMessage += `+${item.health} Health\n`;
+        }
+        
+        if (item.mana) {
+            user.mana = Math.min(user.maxMana, user.mana + item.mana);
+            effectMessage += `+${item.mana} Mana\n`;
+        }
+
+        // Remove item from inventory
+        if (inventoryItem.quantity > 1) {
+            inventoryItem.quantity -= 1;
+        } else {
+            user.inventory = user.inventory.filter(inv => inv.itemId !== itemId);
+        }
+
+        await user.save();
+
+        const embed = new EmbedBuilder()
+            .setTitle('🧪 Item Used!')
+            .setColor(0x9B59B6)
+            .addFields(
+                { name: '📦 Item', value: item.name, inline: true },
+                { name: '⚡ Effect', value: effectMessage || 'Temporary buff applied', inline: true }
+            )
+            .setFooter({ text: 'Item consumed from inventory' });
+
+        await interaction.reply({ embeds: [embed], ephemeral: true });
+    }
 };
