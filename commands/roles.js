@@ -1,42 +1,51 @@
-const { SlashCommandBuilder, ActionRowBuilder, StringSelectMenuBuilder } = require('discord.js');
-const fs = require('fs');
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('roles')
-        .setDescription('Select roles for yourself'),
+        .setDescription('Manage your server roles'),
+    
     async execute(interaction) {
-        const rolesConfig = JSON.parse(fs.readFileSync('./utils/rolesConfig.json', 'utf8'));
-        
-        if (rolesConfig.selectableRoles.length === 0) {
-            return await interaction.reply({ 
-                content: 'No roles are currently available for selection. Administrators can set them up with `/roleadmin`.', 
-                ephemeral: true 
-            });
-        }
+        const embed = new EmbedBuilder()
+            .setTitle('🎭 Role Management')
+            .setDescription('Manage your roles in this server. Choose from available roles or create custom ones.')
+            .setColor(0xE91E63)
+            .addFields(
+                {
+                    name: '🛡️ Game Roles',
+                    value: 'Warrior ⚔️\nMage 🔮\nArcher 🏹\nNovice 🎯'
+                },
+                {
+                    name: '🎨 Color Roles',
+                    value: 'Red 🔴\nBlue 🔵\nGreen 🟢\nGold 🟡'
+                },
+                {
+                    name: '📢 Notification Roles',
+                    value: 'Events 📅\nUpdates 🔔\nQuests 🎯'
+                }
+            )
+            .setFooter({ text: 'Select roles that match your playstyle!' });
 
-        const options = rolesConfig.selectableRoles.map(roleId => {
-            const role = interaction.guild.roles.cache.get(roleId);
-            return {
-                label: role?.name || 'Unknown Role',
-                value: roleId,
-                description: `Select the ${role?.name} role`
-            };
-        });
+        const row = new ActionRowBuilder()
+            .addComponents(
+                new ButtonBuilder()
+                    .setCustomId('roles_game')
+                    .setLabel('Game Roles')
+                    .setStyle(ButtonStyle.Primary),
+                new ButtonBuilder()
+                    .setCustomId('roles_color')
+                    .setLabel('Color Roles')
+                    .setStyle(ButtonStyle.Success),
+                new ButtonBuilder()
+                    .setCustomId('roles_notification')
+                    .setLabel('Notifications')
+                    .setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder()
+                    .setCustomId('roles_refresh')
+                    .setLabel('Refresh')
+                    .setStyle(ButtonStyle.Danger)
+            );
 
-        const selectMenu = new StringSelectMenuBuilder()
-            .setCustomId('role_selection')
-            .setPlaceholder('Choose your roles...')
-            .setMinValues(0)
-            .setMaxValues(options.length)
-            .addOptions(options);
-
-        const row = new ActionRowBuilder().addComponents(selectMenu);
-
-        await interaction.reply({
-            content: 'Select the roles you want:',
-            components: [row],
-            ephemeral: true
-        });
-    },
+        await interaction.reply({ embeds: [embed], components: [row] });
+    }
 };
