@@ -1,43 +1,43 @@
-const fs = require('fs');
+const { EmbedBuilder } = require('discord.js');
 
 module.exports = {
-    customId: 'role_selection',
+    name: 'role_selection',
+    
     async execute(interaction) {
-        const selectedRoleIds = interaction.values;
-        const member = interaction.member;
-
+        const selectedRoles = interaction.values;
+        
         try {
-            // Remove all selectable roles first
-            const rolesConfig = JSON.parse(fs.readFileSync('./utils/rolesConfig.json', 'utf8'));
-            const currentRoles = member.roles.cache;
+            const member = await interaction.guild.members.fetch(interaction.user.id);
             
-            for (const roleId of rolesConfig.selectableRoles) {
-                if (currentRoles.has(roleId)) {
-                    await member.roles.remove(roleId);
+            // Remove all game roles first
+            const gameRoles = ['Warrior', 'Mage', 'Archer', 'Novice'];
+            for (const roleName of gameRoles) {
+                const role = interaction.guild.roles.cache.find(r => r.name === roleName);
+                if (role && member.roles.cache.has(role.id)) {
+                    await member.roles.remove(role);
                 }
             }
-
+            
             // Add selected roles
-            for (const roleId of selectedRoleIds) {
-                await member.roles.add(roleId);
+            for (const roleName of selectedRoles) {
+                const role = interaction.guild.roles.cache.find(r => r.name === roleName);
+                if (role) {
+                    await member.roles.add(role);
+                }
             }
-
-            const roleNames = selectedRoleIds.map(roleId => {
-                const role = interaction.guild.roles.cache.get(roleId);
-                return role?.name || 'Unknown Role';
-            });
-
-            await interaction.reply({ 
-                content: `✅ Your roles have been updated! You now have: ${roleNames.join(', ') || 'no roles'}`,
-                ephemeral: true 
-            });
-
+            
+            const embed = new EmbedBuilder()
+                .setTitle('✅ Roles Updated')
+                .setDescription(`You now have the following roles: ${selectedRoles.map(r => `**${r}**`).join(', ')}`)
+                .setColor(0x2ECC71);
+                
+            await interaction.reply({ embeds: [embed], ephemeral: true });
+            
         } catch (error) {
-            console.error(error);
             await interaction.reply({ 
-                content: 'There was an error updating your roles. Please contact an administrator.', 
+                content: '❌ Failed to update roles. Check bot permissions.', 
                 ephemeral: true 
             });
         }
-    },
+    }
 };
