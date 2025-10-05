@@ -34,8 +34,8 @@ const userSchema = new mongoose.Schema({
     // Inventory
     inventory: [{
         itemId: String,
-        quantity: Number,
-        equipped: Boolean
+        quantity: { type: Number, default: 1 },
+        equipped: { type: Boolean, default: false }
     }],
     
     // Skills
@@ -57,7 +57,14 @@ const userSchema = new mongoose.Schema({
     cooldowns: {
         quest: { type: Date, default: null },
         fight: { type: Date, default: null }
-    }
+    },
+
+    // Warnings system
+    warnings: [{
+        reason: String,
+        moderator: String,
+        date: { type: Date, default: Date.now }
+    }]
 }, { timestamps: true });
 
 userSchema.methods.addExp = function(amount) {
@@ -70,6 +77,25 @@ userSchema.methods.addExp = function(amount) {
         this.health = this.maxHealth;
         this.maxMana += 5;
         this.mana = this.maxMana;
+        
+        // Stat increases based on class
+        if (this.class === 'Warrior') {
+            this.strength += 2;
+            this.defense += 2;
+        } else if (this.class === 'Mage') {
+            this.intelligence += 3;
+            this.maxMana += 10;
+        } else if (this.class === 'Archer') {
+            this.agility += 3;
+            this.strength += 1;
+        } else {
+            // Novice gets balanced stats
+            this.strength += 1;
+            this.intelligence += 1;
+            this.agility += 1;
+            this.defense += 1;
+        }
+        
         return true; // Level up
     }
     return false; // No level up
