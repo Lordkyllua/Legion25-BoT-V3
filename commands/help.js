@@ -25,7 +25,11 @@ module.exports = {
                 },
                 {
                     name: '⚙️ Admin Commands',
-                    value: '`/givegold` - Give gold to users\n`/giveexp` - Give experience\n`/roleadmin` - Manage server roles\n`/warn` - Warn users\n`/warnings` - Check warnings\n`/mute` - Mute users'
+                    value: '`/givegold` - Give gold to users\n`/giveexp` - Give experience\n`/reset` - Reset player/shop data\n`/roleadmin` - Manage server roles\n`/warn` - Warn users\n`/warnings` - Check warnings\n`/mute` - Mute users'
+                },
+                {
+                    name: '🎭 Utility Commands',
+                    value: '`/gif` - Send RPG-themed GIFs'
                 }
             )
             .setFooter({ text: 'Micro Hunter RPG - Developed by LordK', iconURL: interaction.client.user.displayAvatarURL() });
@@ -43,7 +47,11 @@ module.exports = {
                 new ButtonBuilder()
                     .setCustomId('help_classes')
                     .setLabel('Classes Info')
-                    .setStyle(ButtonStyle.Danger)
+                    .setStyle(ButtonStyle.Danger),
+                new ButtonBuilder()
+                    .setCustomId('help_admin')
+                    .setLabel('Admin Guide')
+                    .setStyle(ButtonStyle.Secondary)
             );
 
         await interaction.reply({ embeds: [embed], components: [row] });
