@@ -55,7 +55,8 @@ const statuses = [
     { name: 'Micro Hunter RPG', type: ActivityType.Playing },
     { name: '/help for commands', type: ActivityType.Listening },
     { name: 'Level 100 Max', type: ActivityType.Competing },
-    { name: 'Warriors vs Mages', type: ActivityType.Watching }
+    { name: 'Warriors vs Mages', type: ActivityType.Watching },
+    { name: 'Admin /reset available', type: ActivityType.Custom }
 ];
 
 function updateStatus() {
