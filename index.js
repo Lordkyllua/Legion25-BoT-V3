@@ -1,15 +1,14 @@
-const { Client, GatewayIntentBits, Collection, REST, Routes, ActivityType } = require('discord.js');
-const fs = require('fs');
+const { Client, GatewayIntentBits, Collection, ActivityType } = require('discord.js');
+const mongoose = require('mongoose');
 const path = require('path');
-const database = require('./config/database');
-require('colors');
+const fs = require('fs');
 
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMessages,
-        GatewayIntentBits.GuildMembers,
-        GatewayIntentBits.MessageContent
+        GatewayIntentBits.MessageContent,
+        GatewayIntentBits.GuildMembers
     ]
 });
 
@@ -17,169 +16,93 @@ client.commands = new Collection();
 client.buttons = new Collection();
 client.selectMenus = new Collection();
 
-// Load commands recursively from all subfolders
-function loadCommands(dir) {
-    const items = fs.readdirSync(dir);
-    
-    for (const item of items) {
-        const itemPath = path.join(dir, item);
-        const stat = fs.statSync(itemPath);
-        
-        if (stat.isDirectory()) {
-            // Recursively load commands from subdirectories
-            loadCommands(itemPath);
-        } else if (item.endsWith('.js')) {
-            try {
-                const command = require(itemPath);
-                if (command.data && command.execute) {
-                    client.commands.set(command.data.name, command);
-                    console.log(`✅ Loaded command: ${command.data.name}`.green);
-                }
-            } catch (error) {
-                console.error(`❌ Error loading command ${itemPath}:`.red, error.message);
-            }
-        }
-    }
-}
+// Load commands
+const commandsPath = path.join(__dirname, 'commands');
+const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
 
-// Load all commands
-loadCommands(path.join(__dirname, 'commands'));
-
-// Load events
-const eventsPath = path.join(__dirname, 'events');
-const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'));
-
-for (const file of eventFiles) {
-    const filePath = path.join(eventsPath, file);
-    const event = require(filePath);
-    if (event.once) {
-        client.once(event.name, (...args) => event.execute(...args));
-    } else {
-        client.on(event.name, (...args) => event.execute(...args));
-    }
+for (const file of commandFiles) {
+    const filePath = path.join(commandsPath, file);
+    const command = require(filePath);
+    client.commands.set(command.data.name, command);
 }
 
 // Load components
 const componentsPath = path.join(__dirname, 'components');
-loadComponents(componentsPath);
+const buttonFiles = fs.readdirSync(path.join(componentsPath, 'buttons')).filter(file => file.endsWith('.js'));
+const selectMenuFiles = fs.readdirSync(path.join(componentsPath, 'selectMenus')).filter(file => file.endsWith('.js'));
 
-function loadComponents(dir) {
-    const items = fs.readdirSync(dir);
-    
-    for (const item of items) {
-        const itemPath = path.join(dir, item);
-        const stat = fs.statSync(itemPath);
-        
-        if (stat.isDirectory()) {
-            loadComponents(itemPath);
-        } else if (item.endsWith('.js')) {
-            try {
-                const component = require(itemPath);
-                if (component.customId) {
-                    if (dir.includes('buttons')) {
-                        // Para botones con customId que empiezan con un prefijo
-                        if (component.customId.endsWith('_')) {
-                            // Es un botón con prefijo dinámico
-                            client.buttons.set(component.customId, component);
-                            console.log(`✅ Loaded dynamic button: ${component.customId}`.blue);
-                        } else {
-                            client.buttons.set(component.customId, component);
-                            console.log(`✅ Loaded button: ${component.customId}`.blue);
-                        }
-                    } else if (dir.includes('selectMenus')) {
-                        client.selectMenus.set(component.customId, component);
-                        console.log(`✅ Loaded select menu: ${component.customId}`.cyan);
-                    }
-                }
-            } catch (error) {
-                console.error(`❌ Error loading component ${itemPath}:`.red, error.message);
-            }
-        }
-    }
+for (const file of buttonFiles) {
+    const button = require(path.join(componentsPath, 'buttons', file));
+    client.buttons.set(button.name, button);
 }
 
-// Register slash commands
-const commands = [];
-for (const command of client.commands.values()) {
-    commands.push(command.data.toJSON());
+for (const file of selectMenuFiles) {
+    const selectMenu = require(path.join(componentsPath, 'selectMenus', file));
+    client.selectMenus.set(selectMenu.name, selectMenu);
 }
 
-const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
+// MongoDB connection
+mongoose.connect(process.env.MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+})
+.then(() => console.log('✅ Connected to MongoDB'))
+.catch(err => console.error('❌ MongoDB connection error:', err));
 
-// Rotating statuses
+// Rotating status
+let statusIndex = 0;
 const statuses = [
     { name: 'Micro Hunter RPG', type: ActivityType.Playing },
     { name: '/help for commands', type: ActivityType.Listening },
-    { name: 'with MongoDB database', type: ActivityType.Playing },
-    { name: 'in the forest', type: ActivityType.Playing },
-    { name: 'with dragons', type: ActivityType.Playing },
-    { name: 'the quest for gold', type: ActivityType.Playing },
-    { name: 'with friends', type: ActivityType.Playing },
-    { name: '/rpg to start adventure', type: ActivityType.Listening }
+    { name: 'Level 100 Max', type: ActivityType.Competing },
+    { name: 'Warriors vs Mages', type: ActivityType.Watching }
 ];
 
-client.once('ready', async () => {
-    try {
-        console.log('╔══════════════════════════════════════╗'.cyan);
-        console.log('║          LEGION25 BOT v3.0          ║'.cyan);
-        console.log('║    Developed by LordK with ❤️       ║'.cyan);
-        console.log('║   MongoDB Database Enabled          ║'.cyan);
-        console.log('╚══════════════════════════════════════╝'.cyan);
-        
-        // Connect to MongoDB
-        await database.connect();
-        
-        if (database.isConnected) {
-            console.log('✅ Database connection established'.green);
-            
-            // Initialize default shop items only if DB is connected
-            const Shop = require('./models/Shop');
-            await Shop.initializeDefaultItems();
-        } else {
-            console.log('⚠️  Running without database connection'.yellow);
+function updateStatus() {
+    const status = statuses[statusIndex];
+    client.user.setActivity(status.name, { type: status.type });
+    statusIndex = (statusIndex + 1) % statuses.length;
+}
+
+client.once('ready', () => {
+    console.log(`✅ ${client.user.tag} is online!`);
+    updateStatus();
+    setInterval(updateStatus, 60000); // Update every minute
+});
+
+client.on('interactionCreate', async (interaction) => {
+    if (interaction.isChatInputCommand()) {
+        const command = client.commands.get(interaction.commandName);
+        if (!command) return;
+
+        try {
+            await command.execute(interaction);
+        } catch (error) {
+            console.error(error);
+            await interaction.reply({ 
+                content: 'There was an error executing this command!', 
+                ephemeral: true 
+            });
         }
+    } else if (interaction.isButton()) {
+        const button = client.buttons.get(interaction.customId);
+        if (!button) return;
 
-        console.log(`🤖 Logged in as ${client.user.tag}!`.green);
-        console.log(`🎮 Loaded ${client.commands.size} commands`.blue);
-        console.log(`🔘 Loaded ${client.buttons.size} buttons`.magenta);
-        console.log(`📋 Loaded ${client.selectMenus.size} select menus`.cyan);
-        console.log(`👥 Serving ${client.guilds.cache.size} servers`.magenta);
+        try {
+            await button.execute(interaction);
+        } catch (error) {
+            console.error(error);
+        }
+    } else if (interaction.isStringSelectMenu()) {
+        const selectMenu = client.selectMenus.get(interaction.customId);
+        if (!selectMenu) return;
 
-        // Register commands
-        console.log('🔄 Refreshing application commands...'.yellow);
-        await rest.put(
-            Routes.applicationCommands(client.user.id),
-            { body: commands },
-        );
-        console.log('✅ Successfully reloaded application commands!'.green);
-
-        // Rotate status every minute
-        let statusIndex = 0;
-        setInterval(() => {
-            const status = statuses[statusIndex];
-            client.user.setActivity(status.name, { type: status.type });
-            statusIndex = (statusIndex + 1) % statuses.length;
-        }, 60000);
-
-    } catch (error) {
-        console.error('❌ Error during startup:'.red, error);
-        // No process.exit(1) para que el bot siga funcionando
+        try {
+            await selectMenu.execute(interaction);
+        } catch (error) {
+            console.error(error);
+        }
     }
-});
-
-// Handle graceful shutdown
-process.on('SIGINT', async () => {
-    console.log('\n🔄 Shutting down gracefully...'.yellow);
-    await database.disconnect();
-    client.destroy();
-    process.exit(0);
-});
-
-process.on('SIGTERM', async () => {
-    console.log('\n🔄 Received SIGTERM, shutting down...'.yellow);
-    await database.disconnect();
-    client.destroy();
-    process.exit(0);
 });
 
 client.login(process.env.DISCORD_TOKEN);
