@@ -2,19 +2,8 @@ const { Client, GatewayIntentBits, Collection, ActivityType } = require('discord
 const mongoose = require('mongoose');
 const path = require('path');
 const fs = require('fs');
-require('dotenv').config(); // ✅ AGREGAR ESTO AL INICIO
 
-// Verificar variables de entorno antes de iniciar
-if (!process.env.DISCORD_TOKEN) {
-    console.error('❌ DISCORD_TOKEN is not defined in environment variables');
-    process.exit(1);
-}
-
-if (!process.env.MONGODB_URI) {
-    console.error('❌ MONGODB_URI is not defined in environment variables');
-    process.exit(1);
-}
-
+// No necesitas dotenv en Railway - usa variables de entorno directamente
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -70,65 +59,52 @@ for (const file of selectMenuFiles) {
     }
 }
 
-// MongoDB connection with better error handling
+// MongoDB connection for Railway
 async function connectToDatabase() {
     try {
+        const MONGODB_URI = process.env.MONGODB_URI;
+        
+        if (!MONGODB_URI) {
+            throw new Error('MONGODB_URI is not defined in Railway environment variables');
+        }
+
+        // Verificar que no tenga <db_password>
+        if (MONGODB_URI.includes('<db_password>')) {
+            throw new Error('MONGODB_URI contains <db_password> - replace with actual password in Railway variables');
+        }
+
         console.log('🔗 Connecting to MongoDB...');
+        console.log(`📊 Database: ${MONGODB_URI.split('/').pop().split('?')[0]}`);
         
-        // Parse the URI to check format (without exposing password)
-        const uri = process.env.MONGODB_URI;
-        const dbName = uri.split('/').pop().split('?')[0];
-        const cluster = uri.includes('@') ? uri.split('@')[1].split('.')[0] : 'local';
-        
-        console.log(`📊 Database: ${dbName}`);
-        console.log(`🏢 Cluster: ${cluster}`);
-        
-        await mongoose.connect(uri, {
+        await mongoose.connect(MONGODB_URI, {
             useNewUrlParser: true,
             useUnifiedTopology: true,
-            serverSelectionTimeoutMS: 5000, // Timeout after 5 seconds
-            socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
+            serverSelectionTimeoutMS: 10000,
+            socketTimeoutMS: 45000,
         });
         
         console.log('✅ Connected to MongoDB successfully!');
-        
-        // Verificar que los modelos estén registrados
-        console.log('📋 Registered models:', Object.keys(mongoose.models));
+        console.log(`🏢 Host: ${mongoose.connection.host}`);
+        console.log(`📁 Database: ${mongoose.connection.db.databaseName}`);
         
     } catch (error) {
         console.error('❌ MongoDB connection failed:');
         
-        if (error.name === 'MongoServerError') {
-            switch (error.code) {
-                case 18:
-                    console.error('   🔐 Authentication failed');
-                    console.error('   💡 Please check:');
-                    console.error('      - Username and password in MONGODB_URI');
-                    console.error('      - Database user exists and has permissions');
-                    console.error('      - IP address is whitelisted in MongoDB Atlas');
-                    break;
-                case 8000:
-                    console.error('   🔐 Invalid authentication mechanism');
-                    break;
-                default:
-                    console.error(`   📝 Error code: ${error.code}`);
-                    console.error(`   📝 Message: ${error.message}`);
-            }
-        } else if (error.name === 'MongooseServerSelectionError') {
-            console.error('   🌐 Network error:');
+        if (error.message.includes('<db_password>')) {
+            console.error('   🔐 ERROR: MONGODB_URI contains <db_password>');
+            console.error('   💡 Solution:');
+            console.error('      1. Go to Railway dashboard → Variables');
+            console.error('      2. Set MONGODB_URI to: mongodb+srv://LordK21:YOUR_REAL_PASSWORD@legion25.hhyjic3.mongodb.net/microhunter?retryWrites=true&w=majority');
+            console.error('      3. Replace YOUR_REAL_PASSWORD with your actual MongoDB password');
+        } else if (error.name === 'MongoServerError' && error.code === 18) {
+            console.error('   🔐 Authentication failed');
             console.error('   💡 Please check:');
-            console.error('      - Internet connection');
-            console.error('      - MongoDB Atlas IP whitelist');
-            console.error('      - Firewall settings');
+            console.error('      - Password in MONGODB_URI is correct');
+            console.error('      - User "LordK21" exists in MongoDB Atlas');
+            console.error('      - IP whitelist includes Railway IPs (0.0.0.0/0)');
         } else {
-            console.error('   📝 Error details:', error.message);
+            console.error(`   📝 Error: ${error.message}`);
         }
-        
-        console.error('\n🛠️ Troubleshooting steps:');
-        console.error('   1. Verify MONGODB_URI in .env file');
-        console.error('   2. Check MongoDB Atlas database user permissions');
-        console.error('   3. Add your IP to MongoDB Atlas network access');
-        console.error('   4. Test connection with MongoDB Compass');
         
         process.exit(1);
     }
@@ -141,7 +117,7 @@ const statuses = [
     { name: '/help for commands', type: ActivityType.Listening },
     { name: 'Level 100 Max', type: ActivityType.Competing },
     { name: 'Warriors vs Mages', type: ActivityType.Watching },
-    { name: 'Admin /reset available', type: ActivityType.Custom }
+    { name: 'Hosted on Railway', type: ActivityType.Custom }
 ];
 
 function updateStatus() {
@@ -150,9 +126,10 @@ function updateStatus() {
     statusIndex = (statusIndex + 1) % statuses.length;
 }
 
-client.once('ready', async () => {
+client.once('ready', () => {
     console.log(`✅ ${client.user.tag} is online!`);
     console.log(`📊 Loaded ${client.commands.size} commands, ${client.buttons.size} buttons, ${client.selectMenus.size} select menus`);
+    console.log(`🚀 Host: Railway`);
     updateStatus();
     setInterval(updateStatus, 60000);
 });
@@ -202,13 +179,18 @@ client.on('interactionCreate', async (interaction) => {
     }
 });
 
-// Connect to database and then login
+// Start bot
 async function startBot() {
     try {
         await connectToDatabase();
+        
+        if (!process.env.DISCORD_TOKEN) {
+            throw new Error('DISCORD_TOKEN is not defined in Railway environment variables');
+        }
+        
         await client.login(process.env.DISCORD_TOKEN);
     } catch (error) {
-        console.error('Failed to start bot:', error);
+        console.error('Failed to start bot:', error.message);
         process.exit(1);
     }
 }
