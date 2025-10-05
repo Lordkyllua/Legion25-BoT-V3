@@ -5,13 +5,23 @@ module.exports = {
     name: 'start_quest',
     
     async execute(interaction) {
-        const questName = interaction.customId.replace('start_quest_', '');
+        // Extraer el nombre de la quest del customId (puede ser start_quest_QuestName)
+        const questName = interaction.customId.includes('_') 
+            ? interaction.customId.split('_').slice(2).join('_')
+            : 'Unknown Quest';
+            
         const user = await User.findOne({ userId: interaction.user.id, guildId: interaction.guild.id });
 
-        if (!user) return;
+        if (!user) {
+            return await interaction.reply({ 
+                content: '❌ User not found!', 
+                ephemeral: true 
+            });
+        }
 
         user.activeQuest = questName;
         user.questProgress = 0;
+        user.cooldowns = user.cooldowns || {};
         user.cooldowns.quest = new Date(Date.now() + 30 * 60 * 1000); // 30 min cooldown
         await user.save();
 
