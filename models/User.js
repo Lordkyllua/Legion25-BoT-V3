@@ -1,134 +1,87 @@
-const database = require('../config/database');
+const mongoose = require('mongoose');
 
-class User {
-    static collection() {
-        return database.getCollection('users');
+const userSchema = new mongoose.Schema({
+    userId: { type: String, required: true, unique: true },
+    guildId: { type: String, required: true },
+    username: { type: String, required: true },
+    
+    // RPG Stats
+    level: { type: Number, default: 1 },
+    exp: { type: Number, default: 0 },
+    gold: { type: Number, default: 100 },
+    health: { type: Number, default: 100 },
+    maxHealth: { type: Number, default: 100 },
+    mana: { type: Number, default: 50 },
+    maxMana: { type: Number, default: 50 },
+    
+    // Class System
+    class: { type: String, default: 'Novice' },
+    evolution: { type: Number, default: 0 }, // 0: Base, 1: First evolution, 2: Second evolution
+    
+    // Stats
+    strength: { type: Number, default: 5 },
+    intelligence: { type: Number, default: 5 },
+    agility: { type: Number, default: 5 },
+    defense: { type: Number, default: 5 },
+    
+    // Equipment
+    equipment: {
+        weapon: { type: String, default: null },
+        armor: { type: String, default: null },
+        accessory: { type: String, default: null }
+    },
+    
+    // Inventory
+    inventory: [{
+        itemId: String,
+        quantity: Number,
+        equipped: Boolean
+    }],
+    
+    // Skills
+    skills: [{
+        name: String,
+        level: Number,
+        type: String
+    }],
+    
+    // Quests & Combat
+    activeQuest: { type: String, default: null },
+    questProgress: { type: Number, default: 0 },
+    dailyQuests: { type: Number, default: 0 },
+    lastQuest: { type: Date, default: null },
+    monstersDefeated: { type: Number, default: 0 },
+    bossesDefeated: { type: Number, default: 0 },
+    
+    // Cooldowns
+    cooldowns: {
+        quest: { type: Date, default: null },
+        fight: { type: Date, default: null }
     }
+}, { timestamps: true });
 
-    static async findById(userId) {
-        return await this.collection().findOne({ userId });
+userSchema.methods.addExp = function(amount) {
+    this.exp += amount;
+    const expNeeded = this.level * 100;
+    if (this.exp >= expNeeded) {
+        this.level += 1;
+        this.exp -= expNeeded;
+        this.maxHealth += 10;
+        this.health = this.maxHealth;
+        this.maxMana += 5;
+        this.mana = this.maxMana;
+        return true; // Level up
     }
+    return false; // No level up
+};
 
-    static async create(userId, userData = {}) {
-        const defaultUser = {
-            userId,
-            username: '',
-            rpg: {
-                class: null,
-                level: 1,
-                exp: 0,
-                maxExp: 100,
-                hp: 0,
-                maxHp: 0,
-                mp: 0,
-                maxMp: 0,
-                attack: 0,
-                defense: 0,
-                magic: 0,
-                agility: 0,
-                evolution: 'Beginner',
-                inventory: [],
-                equipped: {
-                    weapon: null,
-                    armor: null,
-                    accessory: null
-                },
-                skills: [],
-                questsCompleted: 0,
-                monstersDefeated: 0,
-                createdAt: new Date()
-            },
-            preferences: {
-                notifications: true,
-                privateProfile: false
-            },
-            statistics: {
-                totalPlayTime: 0,
-                lastActive: new Date(),
-                timesLoggedIn: 1
-            }
-        };
+userSchema.methods.addGold = function(amount) {
+    this.gold += amount;
+};
 
-        const user = { ...defaultUser, ...userData };
-        await this.collection().insertOne(user);
-        return user;
-    }
+userSchema.methods.canEvolve = function() {
+    const evolutionLevels = { 1: 20, 2: 50 };
+    return this.level >= evolutionLevels[this.evolution + 1];
+};
 
-    static async update(userId, updateData) {
-        const result = await this.collection().findOneAndUpdate(
-            { userId },
-            { $set: updateData },
-            { returnDocument: 'after' }
-        );
-        return result;
-    }
-
-    static async updateRPG(userId, rpgData) {
-    try {
-        const result = await this.collection().findOneAndUpdate(
-            { userId: userId },
-            { 
-                $set: { 
-                    rpg: rpgData,
-                    updatedAt: new Date()
-                } 
-            },
-            { returnDocument: 'after', upsert: true }
-        );
-        return result;
-    } catch (error) {
-        console.error('Error updating RPG data:', error);
-        throw error;
-    }
-}
-
-    static async removeFromInventory(userId, itemId) {
-        const result = await this.collection().findOneAndUpdate(
-            { userId },
-            { $pull: { 'rpg.inventory': { id: itemId } } },
-            { returnDocument: 'after' }
-        );
-        return result;
-    }
-
-    static async incrementQuestsCompleted(userId) {
-        const result = await this.collection().findOneAndUpdate(
-            { userId },
-            { $inc: { 'rpg.questsCompleted': 1 } },
-            { returnDocument: 'after' }
-        );
-        return result;
-    }
-
-    static async incrementMonstersDefeated(userId, amount = 1) {
-        const result = await this.collection().findOneAndUpdate(
-            { userId },
-            { $inc: { 'rpg.monstersDefeated': amount } },
-            { returnDocument: 'after' }
-        );
-        return result;
-    }
-
-    static async getTopPlayers(limit = 10) {
-        return await this.collection()
-            .find({ 'rpg.level': { $gt: 0 } })
-            .sort({ 'rpg.level': -1, 'rpg.exp': -1 })
-            .limit(limit)
-            .toArray();
-    }
-
-    static async getUserCount() {
-        return await this.collection().countDocuments();
-    }
-
-    static async resetCharacter(userId, characterData) {
-        const result = await this.collection().findOneAndUpdate(
-            { userId },
-            { $set: { rpg: characterData } },
-            { returnDocument: 'after' }
-        );
-        return result;
-    }
-}
-
-module.exports = User;
+module.exports = mongoose.model('User', userSchema);
