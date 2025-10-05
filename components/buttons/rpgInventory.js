@@ -2,48 +2,38 @@ const { EmbedBuilder } = require('discord.js');
 const User = require('../../models/User');
 
 module.exports = {
-    customId: 'rpg_inventory',
+    name: 'rpg_inventory',
+    
     async execute(interaction) {
-        const userId = interaction.user.id;
-        const user = await User.findById(userId);
-
-        if (!user || !user.rpg || !user.rpg.inventory || user.rpg.inventory.length === 0) {
-            await interaction.reply({ 
-                content: 'Your inventory is empty! Visit the shop with `/shop` to buy items.', 
+        const user = await User.findOne({ userId: interaction.user.id, guildId: interaction.guild.id });
+        
+        if (!user || user.inventory.length === 0) {
+            return await interaction.reply({ 
+                content: '🎒 Your inventory is empty!', 
                 ephemeral: true 
             });
-            return;
         }
 
-        const inventory = user.rpg.inventory;
         const embed = new EmbedBuilder()
-            .setTitle(`🎒 ${interaction.user.username}'s Inventory`)
-            .setColor(0x27AE60)
-            .setDescription(`You have **${inventory.length}** items`)
-            .setFooter({ text: 'Use /buy to get more items!' });
+            .setTitle(`🎒 ${interaction.user.username}'s RPG Inventory`)
+            .setColor(0x9B59B6)
+            .setDescription(`**Gold:** ${user.gold} 🪙\n**Items:** ${user.inventory.length}`);
 
-        // Show items (limit to 10 to avoid embed limits)
-        const displayItems = inventory.slice(0, 10);
-        
-        displayItems.forEach(item => {
+        // Group items by type
+        const itemsByType = {};
+        user.inventory.forEach(invItem => {
+            if (!itemsByType[invItem.type]) itemsByType[invItem.type] = [];
+            itemsByType[invItem.type].push(invItem);
+        });
+
+        Object.entries(itemsByType).forEach(([type, items]) => {
             embed.addFields({
-                name: `${item.name} (ID: ${item.id})`,
-                value: `💰 Price: 🪙 ${item.price}\n📝 ${item.description}\n🎯 Type: ${item.type} | Level: ${item.level}`,
-                inline: false
+                name: `📦 ${type.charAt(0).toUpperCase() + type.slice(1)} (${items.length})`,
+                value: items.map(item => `${item.name} ${item.quantity > 1 ? `(x${item.quantity})` : ''}`).join('\n') || 'None',
+                inline: true
             });
         });
 
-        if (inventory.length > 10) {
-            embed.addFields({
-                name: 'More Items',
-                value: `You have ${inventory.length - 10} more items in your inventory.`,
-                inline: false
-            });
-        }
-
-        await interaction.reply({ 
-            embeds: [embed], 
-            ephemeral: true 
-        });
-    },
+        await interaction.reply({ embeds: [embed], ephemeral: true });
+    }
 };
