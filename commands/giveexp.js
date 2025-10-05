@@ -1,65 +1,52 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const { Player } = require('../models/Player');
-const RPGUtils = require('../utils/rpg');
+const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
+const User = require('../models/User');
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('giveexp')
-        .setDescription('Dar experiencia a un jugador (Admin)')
+        .setDescription('Give experience to a user (Admin only)')
+        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
         .addUserOption(option =>
             option.setName('user')
-                .setDescription('Usuario al que dar experiencia')
+                .setDescription('The user to give experience to')
                 .setRequired(true))
         .addIntegerOption(option =>
             option.setName('amount')
-                .setDescription('Cantidad de experiencia')
+                .setDescription('Amount of experience to give')
                 .setRequired(true)
-                .setMinValue(1)
-                .setMaxValue(1000)),
+                .setMinValue(1)),
     
     async execute(interaction) {
-        try {
-            await interaction.deferReply({ ephemeral: true });
+        const targetUser = interaction.options.getUser('user');
+        const amount = interaction.options.getInteger('amount');
 
-            // Verificar permisos de administrador
-            if (!interaction.member.permissions.has('ADMINISTRATOR')) {
-                return await interaction.editReply({
-                    content: '❌ No tienes permisos para usar este comando.',
-                    ephemeral: true
-                });
-            }
-
-            const targetUser = interaction.options.getUser('user');
-            const expAmount = interaction.options.getInteger('amount');
-
-            // Buscar jugador
-            let player = await Player.findOne({ userId: targetUser.id });
-            if (!player) {
-                player = await RPGUtils.createCharacter(targetUser.id, targetUser.username);
-            }
-
-            // Dar experiencia
-            const result = await RPGUtils.addExperience(player, expAmount);
-
-            const embed = new EmbedBuilder()
-                .setTitle('⭐ Experiencia Otorgada')
-                .setDescription(`Se ha dado ${expAmount} EXP a ${targetUser.username}`)
-                .addFields(
-                    { name: 'Experiencia Anterior', value: `${result.exp - expAmount} EXP`, inline: true },
-                    { name: 'Experiencia Actual', value: `${result.exp} EXP`, inline: true },
-                    { name: 'Nivel', value: `Nivel ${result.level}`, inline: true }
-                )
-                .setColor(0x00FF00)
-                .setTimestamp();
-
-            await interaction.editReply({ embeds: [embed] });
-
-        } catch (error) {
-            console.error('Error in giveexp command:', error);
-            await interaction.editReply({
-                content: '❌ Ocurrió un error al dar experiencia.',
-                ephemeral: true
+        const user = await User.findOne({ userId: targetUser.id, guildId: interaction.guild.id });
+        
+        if (!user) {
+            return await interaction.reply({ 
+                content: '❌ That user has not started their RPG journey!', 
+                ephemeral: true 
             });
         }
+
+        const leveledUp = user.addExp(amount);
+        await user.save();
+
+        const embed = new EmbedBuilder()
+            .setTitle('⭐ Experience Given')
+            .setColor(0x9B59B6)
+            .addFields(
+                { name: '👤 User', value: `${targetUser.username}`, inline: true },
+                { name: '⭐ Amount', value: `${amount} EXP`, inline: true },
+                { name: '📊 Level', value: `Level ${user.level}`, inline: true },
+                { name: '💫 Experience', value: `${user.exp}/${user.level * 100} XP`, inline: true }
+            )
+            .setFooter({ text: 'Admin action' });
+
+        if (leveledUp) {
+            embed.setDescription(`🎉 **Level Up!** ${targetUser.username} reached level ${user.level}!`);
+        }
+
+        await interaction.reply({ embeds: [embed] });
     }
 };
