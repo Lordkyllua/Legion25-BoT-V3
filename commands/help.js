@@ -3,56 +3,49 @@ const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, Butt
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('help')
-        .setDescription('Get help with all commands and features'),
+        .setDescription('Get help with Micro Hunter RPG commands'),
+    
     async execute(interaction) {
         const embed = new EmbedBuilder()
-            .setTitle('🎮 Legion25 Bot - Command Center')
-            .setDescription(`**Welcome to Legion25 RPG Bot!**\n\n*"Where every command begins a new adventure..."*\n\nBrowse through the categories below to learn about all available features.`)
+            .setTitle('🎮 Micro Hunter RPG - Help')
+            .setDescription('A powerful RPG bot inspired by Micro Hunter\n**Developed by LordK**')
             .setColor(0x00AE86)
-            .setThumbnail('https://i.imgur.com/txB085t.jpeg')
             .addFields(
-                { 
-                    name: '🛠️ General Commands', 
-                    value: '```/help - Show this help menu\n/ranking - View gold leaderboard\n/roles - Select server roles\n/shop - Browse magical items\n/buy - Purchase items with gold\n/inventory - Manage your items\n/coinflip - Bet gold on coin flip\n/gif - Get fun GIFs```' 
+                {
+                    name: '🎯 RPG Commands',
+                    value: '`/rpg start` - Start your RPG journey\n`/rpg profile` - Check your profile\n`/rpg class` - Choose your class\n`/quest` - Start a quest\n`/fight` - Battle monsters'
                 },
-                { 
-                    name: '⚔️ RPG System', 
-                    value: '```/rpg - Character management\n/microhunter - Game information\n/quest - Start adventures\n/fight - Battle monsters and bosses```' 
+                {
+                    name: '🛒 Economy Commands',
+                    value: '`/shop` - Browse the item shop\n`/buy` - Purchase items\n`/inventory` - Check your inventory\n`/coinflip` - Gamble your gold'
                 },
-                { 
-                    name: '🛡️ Administration', 
-                    value: '```/roleadmin - Manage roles\n/warn - Warn users\n/warnings - Check warnings\n/mute - Moderate users\n/givegold - Give gold to users\n/giveexp - Give experience to users\n/resetshop - Reset shop items```' 
+                {
+                    name: '📊 Social Commands',
+                    value: '`/ranking` - View leaderboards\n`/roles` - Manage your roles'
+                },
+                {
+                    name: '⚙️ Admin Commands',
+                    value: '`/givegold` - Give gold to users\n`/giveexp` - Give experience\n`/roleadmin` - Manage server roles\n`/warn` - Warn users\n`/warnings` - Check warnings\n`/mute` - Mute users'
                 }
             )
-            .setFooter({ 
-                text: 'Developed with ❤️ by LordK • Inspired by Micro Hunter',
-                iconURL: 'https://i.imgur.com/xaONJxl.jpeg'
-            });
+            .setFooter({ text: 'Micro Hunter RPG - Developed by LordK', iconURL: interaction.client.user.displayAvatarURL() });
 
         const row = new ActionRowBuilder()
             .addComponents(
                 new ButtonBuilder()
                     .setCustomId('help_rpg')
                     .setLabel('RPG Guide')
-                    .setStyle(ButtonStyle.Primary)
-                    .setEmoji('⚔️'),
+                    .setStyle(ButtonStyle.Primary),
                 new ButtonBuilder()
-                    .setCustomId('help_shop')
-                    .setLabel('Shop Guide')
-                    .setStyle(ButtonStyle.Secondary)
-                    .setEmoji('🏪'),
+                    .setCustomId('help_economy')
+                    .setLabel('Economy Guide')
+                    .setStyle(ButtonStyle.Success),
                 new ButtonBuilder()
-                    .setCustomId('help_quests')
-                    .setLabel('Quest Guide')
-                    .setStyle(ButtonStyle.Success)
-                    .setEmoji('🏹'),
-                new ButtonBuilder()
-                    .setCustomId('help_combat')
-                    .setLabel('Combat Guide')
+                    .setCustomId('help_classes')
+                    .setLabel('Classes Info')
                     .setStyle(ButtonStyle.Danger)
-                    .setEmoji('⚔️')
             );
 
         await interaction.reply({ embeds: [embed], components: [row] });
-    },
+    }
 };
