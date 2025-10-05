@@ -1,101 +1,82 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const Shop = require('../models/Shop');
+const Item = require('../models/Item');
 const User = require('../models/User');
-const { getGold, removeGold } = require('../utils/gold');
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('buy')
         .setDescription('Purchase an item from the shop')
-        .addIntegerOption(option =>
-            option.setName('item_id')
-                .setDescription('The ID of the item to buy')
-                .setRequired(true)
-                .setMinValue(1)),
+        .addStringOption(option =>
+            option.setName('item')
+                .setDescription('The item ID to purchase')
+                .setRequired(true)),
+    
     async execute(interaction) {
-        const itemId = interaction.options.getInteger('item_id');
-        const userId = interaction.user.id;
+        const itemId = interaction.options.getString('item');
+        const user = await User.findOne({ userId: interaction.user.id, guildId: interaction.guild.id });
         
-        try {
-            const item = await Shop.getItemById(itemId);
-            const userGold = await getGold(userId);
-            const user = await User.findById(userId);
-
-            if (!item) {
-                const embed = new EmbedBuilder()
-                    .setTitle('❌ Item Not Found')
-                    .setDescription(`No item found with ID: ${itemId}`)
-                    .setColor(0xFF0000)
-                    .setFooter({ text: 'Use /shop to browse available items' });
-                return await interaction.reply({ embeds: [embed], ephemeral: true });
-            }
-
-            // Check if user has enough gold
-            if (userGold < item.price) {
-                const embed = new EmbedBuilder()
-                    .setTitle('💰 Insufficient Gold')
-                    .setDescription(`You need 🪙 **${item.price}** but only have 🪙 **${userGold}**`)
-                    .setColor(0xFFA500)
-                    .addFields(
-                        { name: 'Item', value: item.name, inline: true },
-                        { name: 'Price', value: `🪙 ${item.price}`, inline: true }
-                    );
-                return await interaction.reply({ embeds: [embed], ephemeral: true });
-            }
-
-            // Check level requirement
-            if (user && user.rpg && item.level > user.rpg.level) {
-                const embed = new EmbedBuilder()
-                    .setTitle('📈 Level Requirement')
-                    .setDescription(`You need to be level **${item.level}** to purchase this item`)
-                    .setColor(0xFFA500)
-                    .addFields(
-                        { name: 'Your Level', value: `Level ${user.rpg.level}`, inline: true },
-                        { name: 'Required', value: `Level ${item.level}`, inline: true }
-                    );
-                return await interaction.reply({ embeds: [embed], ephemeral: true });
-            }
-
-            // Check class requirement
-            if (item.class !== 'all' && user && user.rpg && item.class !== user.rpg.class) {
-                const embed = new EmbedBuilder()
-                    .setTitle('🎭 Class Restriction')
-                    .setDescription(`This item is for **${item.class}** class only`)
-                    .setColor(0xFFA500)
-                    .addFields(
-                        { name: 'Your Class', value: user.rpg.class, inline: true },
-                        { name: 'Required', value: item.class, inline: true }
-                    );
-                return await interaction.reply({ embeds: [embed], ephemeral: true });
-            }
-
-            // Purchase item
-            const newBalance = await removeGold(userId, item.price);
-            await User.addToInventory(userId, item);
-
-            const embed = new EmbedBuilder()
-                .setTitle('🎉 Purchase Successful!')
-                .setDescription(`You bought **${item.name}**`)
-                .setColor(0x00FF00)
-                .addFields(
-                    { name: '💰 Price Paid', value: `🪙 ${item.price}`, inline: true },
-                    { name: '💰 Remaining Gold', value: `🪙 ${newBalance}`, inline: true },
-                    { name: '📦 Item Added', value: 'Check your `/inventory`', inline: true }
-                )
-                .setThumbnail('https://i.imgur.com/VDnt46I.png')
-                .setFooter({ text: 'Use /inventory to view your new item!' });
-
-            await interaction.reply({ embeds: [embed] });
-
-        } catch (error) {
-            console.error('Error in buy command:', error);
-            
-            const embed = new EmbedBuilder()
-                .setTitle('❌ Purchase Failed')
-                .setDescription(error.message || 'An error occurred while processing your purchase')
-                .setColor(0xFF0000);
-                
-            await interaction.reply({ embeds: [embed], ephemeral: true });
+        if (!user) {
+            return await interaction.reply({ 
+                content: '❌ You need to start your RPG journey first! Use `/rpg start`', 
+                ephemeral: true 
+            });
         }
-    },
+
+        const item = await Item.findOne({ itemId: itemId });
+        
+        if (!item) {
+            return await interaction.reply({ 
+                content: '❌ Item not found! Use `/shop` to browse available items.', 
+                ephemeral: true 
+            });
+        }
+
+        if (user.gold < item.price) {
+            return await interaction.reply({ 
+                content: `❌ You need **${item.price - user.gold}** more gold to buy this item!`, 
+                ephemeral: true 
+            });
+        }
+
+        if (user.level < item.levelRequirement) {
+            return await interaction.reply({ 
+                content: `❌ You need to be level **${item.levelRequirement}** to buy this item!`, 
+                ephemeral: true 
+            });
+        }
+
+        if (item.classRequirement && user.class.toLowerCase() !== item.classRequirement.toLowerCase()) {
+            return await interaction.reply({ 
+                content: `❌ This item is only available for **${item.classRequirement}** class!`, 
+                ephemeral: true 
+            });
+        }
+
+        // Add item to inventory
+        const existingItem = user.inventory.find(invItem => invItem.itemId === itemId);
+        if (existingItem && item.stackable) {
+            existingItem.quantity += 1;
+        } else {
+            user.inventory.push({
+                itemId: itemId,
+                quantity: 1,
+                equipped: false
+            });
+        }
+
+        user.gold -= item.price;
+        await user.save();
+
+        const embed = new EmbedBuilder()
+            .setTitle('✅ Purchase Successful!')
+            .setColor(0x2ECC71)
+            .addFields(
+                { name: '🛒 Item Purchased', value: `**${item.name}**`, inline: true },
+                { name: '💰 Price', value: `**${item.price}** Gold`, inline: true },
+                { name: '🎒 Inventory', value: `Added to your inventory! Use \`/inventory\` to view.`, inline: false }
+            )
+            .setFooter({ text: 'Happy hunting!' });
+
+        await interaction.reply({ embeds: [embed] });
+    }
 };
