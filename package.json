@@ -1,11 +1,13 @@
 {
   "name": "micro-hunter-rpg-bot",
-  "version": "1.0.0",
-  "description": "A powerful RPG Discord bot inspired by Micro Hunter",
+  "version": "2.0.0",
+  "description": "A powerful RPG Discord bot inspired by Micro Hunter with admin reset features",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "dev": "nodemon index.js"
+    "dev": "nodemon index.js",
+    "init-items": "node scripts/initializeItems.js",
+    "reset-shop": "node scripts/initializeItems.js"
   },
   "dependencies": {
     "discord.js": "^14.14.1",
@@ -20,7 +22,9 @@
     "rpg",
     "bot",
     "micro-hunter",
-    "gaming"
+    "gaming",
+    "admin",
+    "reset"
   ],
   "author": "LordK",
   "license": "MIT"
