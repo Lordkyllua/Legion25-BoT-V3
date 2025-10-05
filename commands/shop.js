@@ -1,80 +1,38 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder } = require('discord.js');
-const Shop = require('../models/Shop');
-const { getGold } = require('../utils/gold');
-const User = require('../models/User');
+const Item = require('../models/Item');
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('shop')
-        .setDescription('Browse the magical item shop'),
+        .setDescription('Browse and buy items from the shop'),
+    
     async execute(interaction) {
-        const userId = interaction.user.id;
-        const user = await User.findById(userId);
-        const userClass = user?.rpg?.class;
-        
-        const categories = await Shop.getCategories();
-        const userGold = await getGold(userId);
-
-        // Obtener items recomendados según la clase del usuario
-        let recommendedItems = [];
-        if (userClass) {
-            // Items de la clase del usuario + items para todas las clases
-            recommendedItems = await Shop.getItemsByClass(userClass);
-            const allClassItems = await Shop.getItemsByClass('all');
-            recommendedItems = [...recommendedItems, ...allClassItems];
-            
-            // Limitar a 8 items para no saturar
-            recommendedItems = recommendedItems.slice(0, 8);
-        }
+        const categories = [
+            { label: '⚔️ Weapons', value: 'weapon', description: 'Swords, staffs, bows and more' },
+            { label: '🛡️ Armor', value: 'armor', description: 'Protective gear and clothing' },
+            { label: '🧪 Potions', value: 'potion', description: 'Healing and buff items' },
+            { label: '💎 Accessories', value: 'accessory', description: 'Rings, amulets and artifacts' },
+            { label: '📦 All Items', value: 'all', description: 'Browse all available items' }
+        ];
 
         const embed = new EmbedBuilder()
-            .setTitle('🏪 Legion25 Item Shop')
-            .setDescription('Welcome to the shop! Browse our categories to find amazing items for your adventure.')
-            .setColor(0x00AE86)
-            .setThumbnail('https://i.imgur.com/VDnt46I.png')
+            .setTitle('🛒 Micro Hunter Shop')
+            .setDescription('Welcome to the adventurer\'s shop! Browse our categories to find powerful items.')
+            .setColor(0x2ECC71)
             .addFields(
-                { name: '💰 Your Gold', value: `🪙 ${userGold}`, inline: true },
-                { name: '🎯 Your Class', value: userClass ? `${userClass.charAt(0).toUpperCase() + userClass.slice(1)}` : 'Not chosen', inline: true },
-                { name: '📦 Categories', value: categories.map(cat => `• ${cat.charAt(0).toUpperCase() + cat.slice(1)}`).join('\n'), inline: true }
+                { name: '💰 Currency', value: 'All items are purchased with **Gold** earned from quests and battles', inline: false },
+                { name: '🎯 Requirements', value: 'Some items require specific levels or classes to use', inline: false }
             )
-            .setFooter({ text: 'Use /buy <item_id> to purchase items!' });
+            .setFooter({ text: 'Use /buy to purchase items directly' });
 
-        // Si el usuario tiene una clase, mostrar items recomendados
-        if (userClass && recommendedItems.length > 0) {
-            embed.addFields({
-                name: `⭐ Recommended for ${userClass.charAt(0).toUpperCase() + userClass.slice(1)}`,
-                value: recommendedItems.map(item => 
-                    `**${item.name}** (ID: ${item.id}) - 🪙 ${item.price}`
-                ).join('\n'),
-                inline: false
-            });
-        }
-
-        const selectMenu = new StringSelectMenuBuilder()
-            .setCustomId('shop_category')
-            .setPlaceholder('Choose a category to browse...')
-            .addOptions(
-                categories.map(category => ({
-                    label: category.charAt(0).toUpperCase() + category.slice(1) + 's',
-                    value: category,
-                    description: `Browse ${category} items`,
-                    emoji: getCategoryEmoji(category)
-                }))
+        const row = new ActionRowBuilder()
+            .addComponents(
+                new StringSelectMenuBuilder()
+                    .setCustomId('shop_category')
+                    .setPlaceholder('Select a category...')
+                    .addOptions(categories)
             );
 
-        const row = new ActionRowBuilder().addComponents(selectMenu);
-
         await interaction.reply({ embeds: [embed], components: [row] });
-    },
+    }
 };
-
-function getCategoryEmoji(category) {
-    const emojis = {
-        weapon: '⚔️',
-        armor: '🛡️',
-        potion: '🧪',
-        accessory: '💎',
-        consumable: '🔄'
-    };
-    return emojis[category] || '📦';
-}
